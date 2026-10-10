@@ -1,0 +1,232 @@
+/* ─── Reset & base ───────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  /* Use svh so the mobile address-bar doesn't clip content */
+  height: 100%; width: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: #050110;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  /* Allow vertical scroll in the root when content overflows */
+  touch-action: pan-y;
+}
+
+body {
+  font-family: 'Nunito', system-ui, sans-serif;
+  color: #fff8f6;
+}
+
+/* native button normalisation */
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  background: none;
+  border: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Focus ring – visible for keyboard / switch users */
+:focus-visible {
+  outline: 2px solid rgba(255, 143, 210, 0.9);
+  outline-offset: 3px;
+}
+
+/* ─── Viewport unit fix for #root ───────────────────────────────── */
+#root {
+  position: fixed;
+  inset: 0;
+  /* use svh so mobile browser chrome doesn't clip the experience */
+  height: 100svh;
+  overflow: hidden;
+}
+
+/* ─── Background images ─────────────────────────────────────────── */
+.bg-img {
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+
+/* Mobile-portrait: show mobile bg, hide desktop */
+.bg-d-rose,
+.bg-d-sunflower,
+.bg-d-waterlily,
+.bg-d-lotus,
+.bg-d-pink {
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+.bg-m-rose,
+.bg-m-sunflower,
+.bg-m-waterlily,
+.bg-m-lotus,
+.bg-m-pink {
+  opacity: 1;
+}
+
+@media (min-width: 860px) {
+  .bg-d-rose,
+  .bg-d-sunflower,
+  .bg-d-waterlily,
+  .bg-d-lotus,
+  .bg-d-pink {
+    opacity: 1;
+  }
+  .bg-m-rose,
+  .bg-m-sunflower,
+  .bg-m-waterlily,
+  .bg-m-lotus,
+  .bg-m-pink {
+    opacity: 0;
+  }
+}
+
+/* ─── Grid layout (mobile-first, desktop side-by-side) ──────────── */
+@media (min-width: 860px) {
+  .grid-main {
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-areas: "copy photo" !important;
+  }
+  .grid-main.flip {
+    grid-template-areas: "photo copy" !important;
+  }
+  .copy-side {
+    text-align: left !important;
+  }
+}
+
+/* Mobile: compact photo; tighter heading so it never clips */
+@media (max-width: 859px) {
+  .photo-side > div { width: min(100%, 260px) !important; }
+  h2 {
+    /* Cap at 1.9rem on narrow screens — enough to be readable without overflowing */
+    font-size: clamp(1.3rem, 6vw, 1.9rem) !important;
+  }
+  .grid-main { gap: 12px !important; }
+}
+
+/* Extra-narrow phones (320–360 px) */
+@media (max-width: 380px) {
+  h2 { font-size: clamp(1.15rem, 5.5vw, 1.6rem) !important; }
+}
+
+/* Very short screens (e.g. landscape phone) – hide photo to give text room */
+@media (max-height: 560px) {
+  .grid-main {
+    grid-template-areas: "copy" !important;
+    grid-template-columns: 1fr !important;
+  }
+  .photo-side { display: none !important; }
+}
+
+/* ─── Landscape phone safe-area padding ─────────────────────────── */
+@media (max-height: 480px) and (orientation: landscape) {
+  section[style] {
+    padding-top:  max(8px, env(safe-area-inset-top))    !important;
+    padding-bottom: max(8px, env(safe-area-inset-bottom)) !important;
+  }
+}
+
+/* ─── Replay button ──────────────────────────────────────────────── */
+.replay {
+  margin-top: .8rem;
+  padding: .7rem 1.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--ac, #ff8fd2);
+  background: rgba(8, 2, 16, .5);
+  backdrop-filter: blur(10px);
+  font-size: clamp(.78rem, 2vw, .92rem);
+  letter-spacing: .1em;
+  transition: background .35s, color .3s, transform .3s, box-shadow .3s;
+  min-height: 44px;
+  cursor: pointer;
+}
+.replay:hover {
+  background: var(--ac);
+  color: #180610;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .35);
+}
+.replay:active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* ─── Easter-egg secret buttons ─────────────────────────────────── */
+.egg {
+  position: absolute;
+  z-index: 4;
+  font-size: 1.15rem;
+  opacity: .22;
+  padding: 14px;                  /* 44 × 44 touch target */
+  transition: opacity .35s, transform .35s;
+  border-radius: 50%;
+  /* subtle pulsing glow */
+  animation: egg-pulse 3.8s ease-in-out infinite;
+}
+.egg:hover,
+.egg:focus-visible {
+  opacity: 1;
+  transform: scale(1.38);
+  animation: none;
+}
+
+@keyframes egg-pulse {
+  0%, 100% { filter: drop-shadow(0 0 0px transparent); }
+  50%       { filter: drop-shadow(0 0 6px rgba(255,255,255,.45)); }
+}
+
+/* ─── Dot navigation ────────────────────────────────────────────── */
+/* Keep the visible dot tiny; expand the invisible tap area via pseudo */
+[aria-label^="Slide"] {
+  position: relative;
+  /* NO padding here – padding was inflating the visible dot size */
+}
+[aria-label^="Slide"]::before {
+  content: '';
+  position: absolute;
+  inset: -8px;          /* 8 px halo gives ≥ 40 px tap target on the 7 px dot */
+  border-radius: 50%;
+}
+
+/* ─── Music button extra touch area ─────────────────────────────── */
+[aria-label$="music"] {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* ─── Heading balance utility ────────────────────────────────────── */
+h1, h2 {
+  text-wrap: balance;
+}
+
+/* ─── Safe-area bottom padding for fixed bottom controls ────────── */
+.safe-bottom {
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+/* ─── Scrollable card content (if a slide ever needs it) ────────── */
+.card-scroll {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  max-height: 70svh;
+  padding-right: 4px;
+}
+.card-scroll::-webkit-scrollbar      { width: 3px; }
+.card-scroll::-webkit-scrollbar-track { background: transparent; }
+.card-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.25); border-radius: 99px; }
+
+/* ─── Reduced-motion: strip all decorative animation ────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration:        .01ms !important;
+    animation-iteration-count: 1     !important;
+    transition-duration:       .01ms !important;
+    scroll-behavior:           auto  !important;
+  }
+}

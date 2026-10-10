@@ -1,0 +1,90 @@
+export const chapters = [
+  {
+    id: 'rose', n: '01',
+    title: 'Today is all about the most beautiful person in my life\u2026',
+    quotes: [
+      '\u201cYou are every reason, every hope, and every dream I\u2019ve ever had.\u201d',
+      '\u201cIn a sea of people, my eyes will always search for you.\u201d',
+    ],
+    imgs: ['rose-1','rose-2','rose-3'],
+    hint: true,
+    egg: { e:'🍫', pos:{ left:'3%', top:'20%' }, msg:'Found a secret 🍫' },
+    palette: {
+      bg: { d:'/bg/rose-d.jpg', m:'/bg/rose-m.jpg' },
+      accent: '#ff4d6d',
+      orbs:[{r:255,g:77,b:109},{r:220,g:100,b:130},{r:255,g:150,b:170},{r:180,g:40,b:70},{r:255,g:200,b:215}],
+      petals:['🌹','🌷','🌸','💕','✦'],
+      count:100,
+    },
+  },
+  {
+    id: 'sunflower', n: '02',
+    title: 'Thank you for filling my days with smiles, love, and countless little memories.',
+    quotes: [
+      '\u201cYou turn ordinary moments into something I\u2019ll treasure forever.\u201d',
+      '\u201cEvery day with you feels like golden hour.\u201d',
+    ],
+    imgs: ['sunflower-1','sunflower-2'],
+    egg: { e:'🧁', pos:{ right:'3%', top:'28%' }, msg:'Found a secret 🧁' },
+    palette: {
+      bg: { d:'/bg/sunflower-d.jpg', m:'/bg/sunflower-m.jpg' },
+      accent: '#ffc83d',
+      orbs:[{r:255,g:200,b:60},{r:255,g:170,b:20},{r:255,g:235,b:130},{r:220,g:145,b:25},{r:255,g:245,b:185}],
+      petals:['🌻','🌼','✨','💛','🌟'],
+      count:85,
+    },
+  },
+  {
+    id: 'waterlily', n: '03',
+    title: 'Every moment with you is a memory I\u2019d choose to live again and again.',
+    quotes: [
+      '\u201cStill waters, soft light, and the thought of you.\u201d',
+      '\u201cWith you, even silence feels like home.\u201d',
+    ],
+    imgs: ['lily-1','lily-2','lily-3','lily-4'],
+    egg: { e:'✦', pos:{ left:'46%', top:'4%' }, msg:'Found a secret ✦' },
+    palette: {
+      bg: { d:'/bg/waterlily-d.jpg', m:'/bg/waterlily-m.jpg' },
+      accent: '#b79cff',
+      orbs:[{r:183,g:156,b:255},{r:130,g:100,b:240},{r:200,g:182,b:255},{r:100,g:70,b:200},{r:220,g:212,b:255}],
+      petals:['🪷','💜','✦','🌸','💫'],
+      count:95,
+    },
+  },
+  {
+    id: 'lotus', n: '04',
+    title: 'Your smile makes everything better.',
+    quotes: [
+      '\u201cPeace looks a lot like your laugh.\u201d',
+      '\u201cYou bloom beautifully in every season of life.\u201d',
+    ],
+    imgs: ['lotus-1','lotus-2'],
+    egg: { e:'🍰', pos:{ left:'5%', top:'7%' }, msg:'Found a secret 🍰' },
+    message: 'please forgive me for all the times i have hurt you , stay happy and keep smiling pa . love u forever 💝',
+    palette: {
+      bg: { d:'/bg/lotus-d.jpg', m:'/bg/lotus-m.jpg' },
+      accent: '#ffb3d1',
+      orbs:[{r:255,g:179,b:209},{r:255,g:140,b:180},{r:255,g:212,b:232},{r:220,g:100,b:152},{r:255,g:232,b:246}],
+      petals:['🌸','🌺','💗','✨','🌷'],
+      count:100, mode:'rise',
+    },
+  },
+  {
+    id: 'pink', n: '05',
+    title: 'You\u2019re truly one of a kind.',
+    title2: 'Happy Birthday, Gundu',
+    quotes: [
+      '\u201cMay every wish you make find its way home.\u201d',
+      '\u201cHere\u2019s to you \u2014 the most wonderful person I know.\u201d',
+    ],
+    imgs: ['pink-1'],
+    last: true,
+    palette: {
+      bg: { d:'/bg/pink-d.jpg', m:'/bg/pink-m.jpg' },
+      accent: '#ff8fd2',
+      orbs:[{r:255,g:143,b:210},{r:255,g:100,b:180},{r:255,g:202,b:232},{r:200,g:82,b:162},{r:255,g:242,b:252},{r:255,g:180,b:62}],
+      petals:['🌸','💖','🎈','✦','💕','🎂','✨'],
+      count:130,
+    },
+  },
+]
