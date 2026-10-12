@@ -76,6 +76,7 @@ export const chapters = [
     quotes: [
       '\u201cMay every wish you make come true.\u201d',
       '\u201cHere\u2019s to you \u2014 the most wonderful person I know.\u201d',
+      '\u201ckeep smiling kandha \ud83d\ude0a\ud83d\ude0a\u201d',
     ],
     imgs: ['pink-1'],
     last: true,

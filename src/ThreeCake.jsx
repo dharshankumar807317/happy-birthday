@@ -1,126 +1,111 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import * as THREE from 'three'
+import confetti from 'canvas-confetti'
 import { playSparkleSound, playWhooshSound, playCelebrationSound } from './soundEffects.js'
 
 const E = [0.22, 0.82, 0.18, 1]
 
-// Delicate luxury sparkle & petal celebration (non-cluttered, elegant)
-function ElegantCelebration({ active, accent = '#ff8fd2' }) {
-  const canvasRef = useRef(null)
-  const particlesRef = useRef([])
+// Multi-cannon full-screen celebratory confetti burst
+export function triggerCelebrationConfetti() {
+  // Center blast with celebratory colors
+  confetti({
+    particleCount: 95,
+    spread: 100,
+    origin: { y: 0.65 },
+    colors: ['#ff4d6d', '#ff8fd2', '#ffd700', '#ffccd5', '#ffffff', '#ffb703'],
+    startVelocity: 45,
+    gravity: 0.85,
+    ticks: 260,
+    zIndex: 99999,
+  })
 
-  useEffect(() => {
-    if (!active) return
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    let animId
+  // Left cannon launch
+  setTimeout(() => {
+    confetti({
+      particleCount: 75,
+      angle: 60,
+      spread: 70,
+      origin: { x: 0.05, y: 0.72 },
+      colors: ['#ff8fd2', '#ffd700', '#ff4d6d', '#ffffff', '#c9184a'],
+      startVelocity: 55,
+      gravity: 0.8,
+      ticks: 280,
+      zIndex: 99999,
+    })
+  }, 120)
 
-    const resize = () => {
-      canvas.width = canvas.parentElement.clientWidth
-      canvas.height = canvas.parentElement.clientHeight
-    }
-    resize()
-    window.addEventListener('resize', resize)
+  // Right cannon launch
+  setTimeout(() => {
+    confetti({
+      particleCount: 75,
+      angle: 120,
+      spread: 70,
+      origin: { x: 0.95, y: 0.72 },
+      colors: ['#ff8fd2', '#ffd700', '#ff4d6d', '#ffffff', '#c9184a'],
+      startVelocity: 55,
+      gravity: 0.8,
+      ticks: 280,
+      zIndex: 99999,
+    })
+  }, 240)
 
-    // Spawn 65 delicate golden sparkles and soft rose blossom petals
-    const newParticles = []
-    const w = canvas.width
-    const h = canvas.height
+  // Secondary glittering cascade from above
+  setTimeout(() => {
+    confetti({
+      particleCount: 65,
+      spread: 120,
+      origin: { x: 0.5, y: 0.45 },
+      colors: ['#ffd700', '#ffffff', '#ff9e00', '#ff8fd2', '#ff4d6d'],
+      scalar: 1.25,
+      startVelocity: 35,
+      gravity: 0.72,
+      ticks: 300,
+      zIndex: 99999,
+    })
+  }, 420)
+}
 
-    for (let i = 0; i < 65; i++) {
-      const isPetal = i % 3 === 0
-      newParticles.push({
-        x: Math.random() * w,
-        y: Math.random() * (h * 0.4),
-        vx: (Math.random() - 0.5) * 1.8,
-        vy: isPetal ? 0.8 + Math.random() * 1.4 : 1.2 + Math.random() * 2.2,
-        size: isPetal ? 7 + Math.random() * 6 : 1.8 + Math.random() * 3.2,
-        color: isPetal ? '#ffb3c6' : Math.random() > 0.4 ? '#ffd700' : '#ffffff',
-        rot: Math.random() * 360,
-        vRot: (Math.random() - 0.5) * 2.5,
-        isPetal,
-        life: 1,
-        decay: 0.004 + Math.random() * 0.004,
-      })
-    }
-    particlesRef.current = newParticles
+// Procedural red velvet crumb bump map for realistic sponge depth
+function createCrumbTexture() {
+  const canvas = document.createElement('canvas')
+  canvas.width = 256
+  canvas.height = 256
+  const ctx = canvas.getContext('2d')
+  ctx.fillStyle = '#808080'
+  ctx.fillRect(0, 0, 256, 256)
+  const imgData = ctx.getImageData(0, 0, 256, 256)
+  const d = imgData.data
+  for (let i = 0; i < d.length; i += 4) {
+    const noise = (Math.random() - 0.5) * 65
+    const val = Math.max(0, Math.min(255, 128 + noise))
+    d[i] = val
+    d[i + 1] = val
+    d[i + 2] = val
+  }
+  ctx.putImageData(imgData, 0, 0)
+  const tex = new THREE.CanvasTexture(canvas)
+  tex.wrapS = THREE.RepeatWrapping
+  tex.wrapT = THREE.RepeatWrapping
+  tex.repeat.set(4, 2)
+  return tex
+}
 
-    const loop = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      const list = particlesRef.current
-
-      for (let i = list.length - 1; i >= 0; i--) {
-        const p = list[i]
-        p.x += p.vx
-        p.y += p.vy
-        p.rot += p.vRot
-        p.life -= p.decay
-
-        if (p.life <= 0 || p.y > canvas.height + 20) {
-          list.splice(i, 1)
-          continue
-        }
-
-        ctx.save()
-        ctx.translate(p.x, p.y)
-        ctx.rotate((p.rot * Math.PI) / 180)
-        ctx.globalAlpha = Math.max(0, p.life * (p.isPetal ? 0.85 : 0.95))
-
-        if (p.isPetal) {
-          // Delicate organic blossom petal
-          ctx.fillStyle = p.color
-          ctx.beginPath()
-          ctx.ellipse(0, 0, p.size * 0.9, p.size * 0.5, 0, 0, Math.PI * 2)
-          ctx.fill()
-        } else {
-          // Radiant 4-point sparkle star
-          ctx.fillStyle = p.color
-          ctx.shadowColor = p.color
-          ctx.shadowBlur = 6
-          const s = p.size
-          ctx.beginPath()
-          ctx.moveTo(0, -s * 2)
-          ctx.lineTo(s * 0.4, -s * 0.4)
-          ctx.lineTo(s * 2, 0)
-          ctx.lineTo(s * 0.4, s * 0.4)
-          ctx.lineTo(0, s * 2)
-          ctx.lineTo(-s * 0.4, s * 0.4)
-          ctx.lineTo(-s * 2, 0)
-          ctx.lineTo(-s * 0.4, -s * 0.4)
-          ctx.closePath()
-          ctx.fill()
-        }
-        ctx.restore()
-      }
-
-      if (list.length > 0) {
-        animId = requestAnimationFrame(loop)
-      }
-    }
-
-    loop()
-
-    return () => {
-      cancelAnimationFrame(animId)
-      window.removeEventListener('resize', resize)
-    }
-  }, [active])
-
-  return (
-    <canvas
-      ref={canvasRef}
-      style={{
-        position: 'absolute',
-        inset: 0,
-        pointerEvents: 'none',
-        zIndex: 10,
-        width: '100%',
-        height: '100%',
-      }}
-    />
-  )
+// Procedural soft contact shadow texture for realistic ground ambient occlusion
+function createContactShadowTexture() {
+  const canvas = document.createElement('canvas')
+  canvas.width = 256
+  canvas.height = 256
+  const ctx = canvas.getContext('2d')
+  const grad = ctx.createRadialGradient(128, 128, 20, 128, 128, 124)
+  grad.addColorStop(0, 'rgba(12, 2, 6, 0.85)')
+  grad.addColorStop(0.35, 'rgba(25, 4, 12, 0.52)')
+  grad.addColorStop(0.7, 'rgba(40, 8, 18, 0.18)')
+  grad.addColorStop(1, 'rgba(0, 0, 0, 0)')
+  ctx.fillStyle = grad
+  ctx.fillRect(0, 0, 256, 256)
+  const tex = new THREE.CanvasTexture(canvas)
+  return tex
 }
 
 /* ─── 3D Three.js Birthday Cake Component ────────────────────────── */
@@ -151,141 +136,213 @@ export default function ThreeCake({ onWish, accent = '#ff8fd2', muted = false })
 
     // Camera with flattering perspective angle
     const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100)
-    camera.position.set(0, 2.0, 5.8)
-    camera.lookAt(0, 0.25, 0)
+    camera.position.set(0, 2.05, 5.7)
+    camera.lookAt(0, 0.2, 0)
 
-    // Renderer with transparent background and high shadow precision
+    // Renderer with transparent background and high precision soft shadows
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'high-performance' })
     renderer.setSize(width, height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.toneMapping = THREE.ACESFilmicToneMapping
     renderer.toneMappingExposure = 1.15
+    renderer.shadowMap.enabled = true
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap
     container.appendChild(renderer.domElement)
 
-    // ── Studio Lighting Setup ──
-    const ambientLight = new THREE.AmbientLight(0xffe4e6, 0.9)
+    // Procedural textures for realistic tactile crumb & grounding contact shadow
+    const crumbTex = createCrumbTexture()
+    const contactShadowTex = createContactShadowTexture()
+
+    // ── Studio Lighting Setup with Shadow Mapping ──
+    const ambientLight = new THREE.AmbientLight(0xffe8ec, 0.62)
     scene.add(ambientLight)
 
-    const keyLight = new THREE.DirectionalLight(0xffffff, 2.2)
-    keyLight.position.set(3.5, 5, 4)
+    const keyLight = new THREE.DirectionalLight(0xffffff, 2.5)
+    keyLight.position.set(3.6, 5.5, 4.2)
+    keyLight.castShadow = true
+    keyLight.shadow.mapSize.width = 2048
+    keyLight.shadow.mapSize.height = 2048
+    keyLight.shadow.camera.near = 0.5
+    keyLight.shadow.camera.far = 18
+    keyLight.shadow.camera.left = -3.2
+    keyLight.shadow.camera.right = 3.2
+    keyLight.shadow.camera.top = 3.8
+    keyLight.shadow.camera.bottom = -2.8
+    keyLight.shadow.bias = -0.0003
+    keyLight.shadow.normalBias = 0.02
+    keyLight.shadow.radius = 2.4
     scene.add(keyLight)
 
-    const fillLight = new THREE.DirectionalLight(0xffb6c1, 1.2)
-    fillLight.position.set(-3.5, 3, -2)
+    const fillLight = new THREE.DirectionalLight(0xffb6c1, 0.95)
+    fillLight.position.set(-3.5, 3.2, -2.5)
     scene.add(fillLight)
 
-    const rimLight = new THREE.PointLight(0xffd1dc, 1.5, 10)
-    rimLight.position.set(0, 4, -3)
+    const topLight = new THREE.DirectionalLight(0xfff5ea, 0.7)
+    topLight.position.set(0, 6, 1.2)
+    scene.add(topLight)
+
+    const rimLight = new THREE.PointLight(0xffd1dc, 1.4, 12)
+    rimLight.position.set(0, 4.2, -3.2)
     scene.add(rimLight)
 
     // ── Master Cake Group ──
     const cakeGroup = new THREE.Group()
-    cakeGroup.position.y = -0.45
+    cakeGroup.position.y = -0.42
     scene.add(cakeGroup)
 
-    // ── 1. Pedestal Stand (Silver & Crystal Sheen) ──
+    // ── Ground Contact Shadows ──
+    const shadowPlane = new THREE.Mesh(
+      new THREE.PlaneGeometry(8, 8),
+      new THREE.ShadowMaterial({ opacity: 0.42 })
+    )
+    shadowPlane.rotation.x = -Math.PI / 2
+    shadowPlane.position.y = -0.892
+    shadowPlane.receiveShadow = true
+    cakeGroup.add(shadowPlane)
+
+    const contactShadow = new THREE.Mesh(
+      new THREE.PlaneGeometry(3.6, 3.6),
+      new THREE.MeshBasicMaterial({
+        map: contactShadowTex,
+        transparent: true,
+        opacity: 0.9,
+        depthWrite: false,
+      })
+    )
+    contactShadow.rotation.x = -Math.PI / 2
+    contactShadow.position.y = -0.89
+    cakeGroup.add(contactShadow)
+
+    // ── 1. Pedestal Stand (Polished Silver & Champagne Chrome) ──
     const standMat = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      metalness: 0.75,
-      roughness: 0.18,
+      color: 0xf6f6f8,
+      metalness: 0.82,
+      roughness: 0.16,
     })
 
-    // Stand base
-    const standBase = new THREE.Mesh(new THREE.CylinderGeometry(1.45, 1.6, 0.08, 48), standMat)
+    const standBase = new THREE.Mesh(new THREE.CylinderGeometry(1.48, 1.62, 0.08, 64), standMat)
     standBase.position.y = -0.85
+    standBase.castShadow = true
+    standBase.receiveShadow = true
     cakeGroup.add(standBase)
 
-    // Stand stem
-    const standStem = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.45, 0.4, 32), standMat)
-    standStem.position.y = -0.62
+    const standStem = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.46, 0.42, 48), standMat)
+    standStem.position.y = -0.61
+    standStem.castShadow = true
+    standStem.receiveShadow = true
     cakeGroup.add(standStem)
 
-    // Stand plate
-    const standPlate = new THREE.Mesh(new THREE.CylinderGeometry(1.85, 1.85, 0.08, 48), standMat)
-    standPlate.position.y = -0.4
+    const standPlate = new THREE.Mesh(new THREE.CylinderGeometry(1.88, 1.88, 0.08, 64), standMat)
+    standPlate.position.y = -0.38
+    standPlate.castShadow = true
+    standPlate.receiveShadow = true
     cakeGroup.add(standPlate)
 
-    // ── 2. Bottom Tier (Rich Rose Velvet) ──
-    const bottomMat = new THREE.MeshStandardMaterial({
-      color: 0xee527a,
-      roughness: 0.38,
-      metalness: 0.05,
+    // ── 2. Bottom Tier (Deep Crimson Red Velvet Sponge) ──
+    const redVelvetBottomMat = new THREE.MeshStandardMaterial({
+      color: 0x820e23, // authentic rich cocoa crimson red velvet
+      roughness: 0.62,
+      metalness: 0.03,
+      bumpMap: crumbTex,
+      bumpScale: 0.018,
     })
-    const bottomTier = new THREE.Mesh(new THREE.CylinderGeometry(1.42, 1.42, 0.52, 48), bottomMat)
+    const bottomTier = new THREE.Mesh(new THREE.CylinderGeometry(1.42, 1.42, 0.52, 64), redVelvetBottomMat)
     bottomTier.position.y = -0.1
+    bottomTier.castShadow = true
+    bottomTier.receiveShadow = true
     cakeGroup.add(bottomTier)
 
-    // Cream pearls along bottom tier base
-    const pearlMat = new THREE.MeshStandardMaterial({
-      color: 0xfff0f5,
-      roughness: 0.25,
-      metalness: 0.1,
+    // Vanilla Cream Cheese frosting pearls along bottom tier base
+    const creamCheeseMat = new THREE.MeshStandardMaterial({
+      color: 0xfffcf7, // silky warm cream cheese frosting
+      roughness: 0.22,
+      metalness: 0.04,
     })
     for (let i = 0; i < 24; i++) {
       const angle = (i / 24) * Math.PI * 2
-      const pearl = new THREE.Mesh(new THREE.SphereGeometry(0.065, 16, 16), pearlMat)
-      pearl.position.set(Math.cos(angle) * 1.42, -0.34, Math.sin(angle) * 1.42)
+      const pearl = new THREE.Mesh(new THREE.SphereGeometry(0.065, 16, 16), creamCheeseMat)
+      pearl.position.set(Math.cos(angle) * 1.42, -0.33, Math.sin(angle) * 1.42)
+      pearl.castShadow = true
+      pearl.receiveShadow = true
       cakeGroup.add(pearl)
     }
 
-    // ── 3. Middle Tier (Champagne Cream & Strawberry Glaze) ──
-    const middleMat = new THREE.MeshStandardMaterial({
-      color: 0xffeef2,
-      roughness: 0.3,
+    // ── 3. Middle Tier (Rich Crimson Red Velvet with Cream Cheese Drips) ──
+    const redVelvetMiddleMat = new THREE.MeshStandardMaterial({
+      color: 0x8f1027,
+      roughness: 0.6,
+      metalness: 0.03,
+      bumpMap: crumbTex,
+      bumpScale: 0.018,
     })
-    const middleTier = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.05, 0.48, 48), middleMat)
+    const middleTier = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.05, 0.48, 64), redVelvetMiddleMat)
     middleTier.position.y = 0.4
+    middleTier.castShadow = true
+    middleTier.receiveShadow = true
     cakeGroup.add(middleTier)
 
-    // Glossy Strawberry Glaze Torus & Drips
-    const glazeMat = new THREE.MeshStandardMaterial({
-      color: 0xff3366,
-      roughness: 0.12,
-      metalness: 0.08,
+    // Luscious Cream Cheese Frosting Torus & Drips
+    const frostingDripMat = new THREE.MeshStandardMaterial({
+      color: 0xfffdf8,
+      roughness: 0.2,
+      metalness: 0.05,
     })
-    const glazeRim = new THREE.Mesh(new THREE.TorusGeometry(1.04, 0.05, 16, 48), glazeMat)
+    const glazeRim = new THREE.Mesh(new THREE.TorusGeometry(1.04, 0.058, 16, 64), frostingDripMat)
     glazeRim.position.y = 0.63
     glazeRim.rotation.x = Math.PI / 2
+    glazeRim.castShadow = true
+    glazeRim.receiveShadow = true
     cakeGroup.add(glazeRim)
 
-    // Organic sculpted drips
+    // Cream cheese drips running down the crimson cake
     for (let i = 0; i < 16; i++) {
       const angle = (i / 16) * Math.PI * 2
       const dripLen = 0.12 + (i % 3) * 0.09
-      const drip = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.015, dripLen, 12), glazeMat)
+      const drip = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.016, dripLen, 16), frostingDripMat)
       drip.position.set(Math.cos(angle) * 1.05, 0.62 - dripLen / 2, Math.sin(angle) * 1.05)
+      drip.castShadow = true
+      drip.receiveShadow = true
       cakeGroup.add(drip)
     }
 
-    // ── 4. Top Tier (Soft Blush Whipped Cream) ──
-    const topMat = new THREE.MeshStandardMaterial({
-      color: 0xffd1dc,
-      roughness: 0.32,
+    // ── 4. Top Tier (Vibrant Red Velvet with Cream Cheese Rosettes) ──
+    const redVelvetTopMat = new THREE.MeshStandardMaterial({
+      color: 0x9b122e,
+      roughness: 0.58,
+      metalness: 0.03,
+      bumpMap: crumbTex,
+      bumpScale: 0.018,
     })
-    const topTier = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.68, 0.42, 48), topMat)
+    const topTier = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.68, 0.42, 64), redVelvetTopMat)
     topTier.position.y = 0.85
+    topTier.castShadow = true
+    topTier.receiveShadow = true
     cakeGroup.add(topTier)
 
-    // Piped cream rosettes on top rim
+    // Cream cheese rosettes on top rim
     for (let i = 0; i < 12; i++) {
       const angle = (i / 12) * Math.PI * 2
-      const rosette = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 12), pearlMat)
+      const rosette = new THREE.Mesh(new THREE.SphereGeometry(0.058, 16, 16), creamCheeseMat)
       rosette.position.set(Math.cos(angle) * 0.66, 1.05, Math.sin(angle) * 0.66)
+      rosette.castShadow = true
+      rosette.receiveShadow = true
       cakeGroup.add(rosette)
     }
 
-    // Confection topper (glazed cherry & gold leaf)
+    // Confection topper (ruby glazed berry with gold leaf luster)
     const topperMat = new THREE.MeshStandardMaterial({
-      color: 0xff1744,
-      roughness: 0.15,
-      metalness: 0.1,
+      color: 0xc41443,
+      roughness: 0.1,
+      metalness: 0.18,
     })
-    const topper = new THREE.Mesh(new THREE.SphereGeometry(0.12, 24, 24), topperMat)
+    const topper = new THREE.Mesh(new THREE.SphereGeometry(0.12, 28, 28), topperMat)
     topper.position.y = 1.15
+    topper.castShadow = true
+    topper.receiveShadow = true
     cakeGroup.add(topper)
 
-    // ── 5. Candles, Wicks, Dynamic Flames & Point Lights ──
-    const candleColors = [0xff80bf, 0xa78bfa, 0xfbbf24, 0x34d399, 0xf472b6]
+    // ── 5. Candles (Gold, Champagne, Cream Taper Candles) ──
+    const candleColors = [0xffd700, 0xfff0db, 0xffb703, 0xffccd5, 0xffd700]
     const candlePositions = [
       [-0.42, 0.08],
       [-0.22, -0.16],
@@ -301,18 +358,22 @@ export default function ThreeCake({ onWish, accent = '#ff8fd2', muted = false })
       // Candle stick
       const cMat = new THREE.MeshStandardMaterial({
         color: candleColors[i],
-        roughness: 0.3,
+        roughness: 0.28,
+        metalness: i % 2 === 0 ? 0.35 : 0.08,
       })
-      const candle = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.35, 16), cMat)
+      const candle = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.35, 20), cMat)
       candle.position.set(cx, 1.22, cz)
+      candle.castShadow = true
+      candle.receiveShadow = true
       cakeGroup.add(candle)
 
       // Wick
       const wick = new THREE.Mesh(
         new THREE.CylinderGeometry(0.008, 0.008, 0.06, 8),
-        new THREE.MeshBasicMaterial({ color: 0x222222 })
+        new THREE.MeshBasicMaterial({ color: 0x1f1f1f })
       )
       wick.position.set(cx, 1.42, cz)
+      wick.castShadow = true
       cakeGroup.add(wick)
 
       // Flame Group (anchored at wick tip)
@@ -343,8 +404,8 @@ export default function ThreeCake({ onWish, accent = '#ff8fd2', muted = false })
       innerFlame.position.y = 0.06
       flameGroup.add(innerFlame)
 
-      // Real-time warm candle point light
-      const pLight = new THREE.PointLight(0xffa200, 0, 1.8)
+      // Real-time warm candle point light illuminating top tier
+      const pLight = new THREE.PointLight(0xffaa33, 0, 2.2, 1.8)
       pLight.position.set(cx, 1.52, cz)
       cakeGroup.add(pLight)
 
@@ -427,6 +488,8 @@ export default function ThreeCake({ onWish, accent = '#ff8fd2', muted = false })
       container.removeEventListener('touchstart', onMouseDown)
       window.removeEventListener('touchmove', onMouseMove)
       window.removeEventListener('touchend', onMouseUp)
+      crumbTex.dispose()
+      contactShadowTex.dispose()
       if (renderer.domElement && container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement)
       }
@@ -479,6 +542,17 @@ export default function ThreeCake({ onWish, accent = '#ff8fd2', muted = false })
     }
   }, [phase])
 
+  const handleMakeAnotherWish = () => {
+    // Relight candles so user can make another wish
+    setPhase(1)
+    playSparkleSound(muted)
+  }
+
+  const handleMoreCelebration = () => {
+    playCelebrationSound(muted)
+    triggerCelebrationConfetti()
+  }
+
   const handleCeremonyClick = () => {
     if (phase === 0) {
       // Light candles
@@ -490,13 +564,12 @@ export default function ThreeCake({ onWish, accent = '#ff8fd2', muted = false })
       playWhooshSound(muted)
       setTimeout(() => {
         playCelebrationSound(muted)
-        setCelebrationTrigger((c) => c + 1)
+        triggerCelebrationConfetti()
         onWish?.()
       }, 350)
     } else if (phase === 2) {
-      // Re-trigger celebration
-      playCelebrationSound(muted)
-      setCelebrationTrigger((c) => c + 1)
+      // Re-trigger celebration if cake clicked
+      handleMoreCelebration()
     }
   }
 
@@ -514,15 +587,13 @@ export default function ThreeCake({ onWish, accent = '#ff8fd2', muted = false })
         userSelect: 'none',
       }}
     >
-      <ElegantCelebration active={celebrationTrigger > 0} accent={accent} />
-
       {/* 3D WebGL Canvas Container */}
       <div
         ref={mountRef}
         onClick={handleCeremonyClick}
         style={{
           width: 'min(380px, 86vw)',
-          height: 'min(320px, 44svh)',
+          height: 'min(335px, 46svh)',
           position: 'relative',
           cursor: 'grab',
           filter: phase === 1 ? 'drop-shadow(0 12px 30px rgba(255,160,50,0.35))' : 'drop-shadow(0 14px 28px rgba(0,0,0,0.5))',
@@ -533,37 +604,79 @@ export default function ThreeCake({ onWish, accent = '#ff8fd2', muted = false })
 
       {/* Elegant Action Button */}
       <div style={{ marginTop: '0.4rem', textAlign: 'center', position: 'relative', zIndex: 12 }}>
-        <motion.button
-          onClick={handleCeremonyClick}
-          whileHover={{ scale: 1.04, boxShadow: `0 8px 24px ${accent}66` }}
-          whileTap={{ scale: 0.96 }}
-          style={{
-            padding: '0.52rem 1.45rem',
-            borderRadius: 999,
-            background:
-              phase === 1
-                ? 'linear-gradient(135deg, #ff9e00 0%, #ff5400 100%)'
-                : phase === 2
-                ? 'linear-gradient(135deg, #ff4d6d 0%, #b79cff 100%)'
-                : 'linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 100%)',
-            backdropFilter: 'blur(16px)',
-            border: '1px solid rgba(255,255,255,0.25)',
-            color: '#fff',
-            fontWeight: 700,
-            fontSize: 'clamp(0.82rem, 2.2vw, 0.92rem)',
-            letterSpacing: '0.08em',
-            boxShadow:
-              phase === 1
-                ? '0 6px 20px rgba(255,158,0,0.45)'
-                : '0 6px 18px rgba(0,0,0,0.35)',
-            cursor: 'pointer',
-            transition: 'all 0.35s ease',
-          }}
-        >
-          {phase === 0 && '✨ Tap to light the candles ✨'}
-          {phase === 1 && '🌬️ Blow them out & make a wish'}
-          {phase === 2 && '✨ Tap for more celebration ✨'}
-        </motion.button>
+        {phase === 2 ? (
+          <div style={{ display: 'flex', gap: '0.6rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <motion.button
+              onClick={handleMakeAnotherWish}
+              whileHover={{ scale: 1.05, boxShadow: `0 8px 24px rgba(255,158,0,0.55)` }}
+              whileTap={{ scale: 0.95 }}
+              style={{
+                padding: '0.52rem 1.35rem',
+                borderRadius: 999,
+                background: 'linear-gradient(135deg, #ff9e00 0%, #ff5400 100%)',
+                backdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255,255,255,0.35)',
+                color: '#fff',
+                fontWeight: 700,
+                fontSize: 'clamp(0.82rem, 2.2vw, 0.92rem)',
+                letterSpacing: '0.08em',
+                boxShadow: '0 6px 20px rgba(255,158,0,0.45)',
+                cursor: 'pointer',
+              }}
+            >
+              🕯️ Make Another Wish ✨
+            </motion.button>
+            <motion.button
+              onClick={handleMoreCelebration}
+              whileHover={{ scale: 1.05, boxShadow: `0 8px 24px ${accent}66` }}
+              whileTap={{ scale: 0.95 }}
+              style={{
+                padding: '0.52rem 1.25rem',
+                borderRadius: 999,
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 100%)',
+                backdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255,255,255,0.22)',
+                color: '#fff',
+                fontWeight: 700,
+                fontSize: 'clamp(0.82rem, 2.2vw, 0.92rem)',
+                letterSpacing: '0.08em',
+                boxShadow: '0 6px 18px rgba(0,0,0,0.35)',
+                cursor: 'pointer',
+              }}
+            >
+              💖 Celebrate ✨
+            </motion.button>
+          </div>
+        ) : (
+          <motion.button
+            onClick={handleCeremonyClick}
+            whileHover={{ scale: 1.04, boxShadow: `0 8px 24px ${accent}66` }}
+            whileTap={{ scale: 0.96 }}
+            style={{
+              padding: '0.52rem 1.45rem',
+              borderRadius: 999,
+              background:
+                phase === 1
+                  ? 'linear-gradient(135deg, #ff9e00 0%, #ff5400 100%)'
+                  : 'linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 100%)',
+              backdropFilter: 'blur(16px)',
+              border: '1px solid rgba(255,255,255,0.25)',
+              color: '#fff',
+              fontWeight: 700,
+              fontSize: 'clamp(0.82rem, 2.2vw, 0.92rem)',
+              letterSpacing: '0.08em',
+              boxShadow:
+                phase === 1
+                  ? '0 6px 20px rgba(255,158,0,0.45)'
+                  : '0 6px 18px rgba(0,0,0,0.35)',
+              cursor: 'pointer',
+              transition: 'all 0.35s ease',
+            }}
+          >
+            {phase === 0 && '✨ Tap to light the candles ✨'}
+            {phase === 1 && '🌬️ Blow them out & make a wish'}
+          </motion.button>
+        )}
 
         {/* Elegant Wish Card on Phase 2 */}
         <AnimatePresence>

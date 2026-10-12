@@ -26,14 +26,34 @@ function useIsMobile() {
 }
 
 /* ─── QuotePill ─────────────────────────────────────────────────── */
-function QuotePill({ text, delay = 0.15, style }) {
+function QuotePill({ text, delay = 0.15, style, floatDuration = 4.5 }) {
   const r = useReducedMotion()
   return (
     <motion.div
-      initial={r ? false : { opacity: 0, y: 8, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
+      initial={r ? false : { opacity: 0, y: 10, scale: 0.95 }}
+      animate={
+        r
+          ? { opacity: 1, y: 0, scale: 1 }
+          : {
+              opacity: 1,
+              scale: 1,
+              y: [0, -6, 0, 5, 0],
+            }
+      }
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.35, delay, ease: E }}
+      transition={{
+        opacity: { duration: 0.35, delay, ease: E },
+        scale: { duration: 0.35, delay, ease: E },
+        y: r
+          ? { duration: 0.35, delay, ease: E }
+          : {
+              duration: floatDuration,
+              repeat: Infinity,
+              repeatType: 'reverse',
+              ease: 'easeInOut',
+              delay: delay + 0.35,
+            },
+      }}
       style={{
         position: 'absolute', zIndex: 3,
         maxWidth: 'min(88vw, 340px)',
@@ -42,7 +62,8 @@ function QuotePill({ text, delay = 0.15, style }) {
         background: 'rgba(0,0,0,.54)',
         backdropFilter: 'blur(18px)',
         WebkitBackdropFilter: 'blur(18px)',
-        border: '1px solid rgba(255,255,255,.18)',
+        border: '1px solid rgba(255,255,255,.20)',
+        boxShadow: '0 8px 24px rgba(0,0,0,.45)',
         fontFamily: "'Nunito', sans-serif",
         fontStyle: 'italic',
         fontSize: 'clamp(.76rem, 2.1vw, .90rem)',
@@ -90,89 +111,837 @@ function FadeUp({ delay = 0, children, style }) {
   )
 }
 
-/* ─── Photo frame shapes ────────────────────────────────────────── */
-const FRAMES = [
-  { borderRadius: '70% 30% 70% 30% / 30% 70% 30% 70%' },
-  { borderRadius: '30% 70% 30% 70% / 70% 30% 70% 30%' },
-  { borderRadius: '65% 35% 65% 35% / 35% 65% 35% 65%' },
-  { borderRadius: '55% 45% 55% 45% / 45% 55% 45% 55%' },
-]
+/* ─── Photo image source resolver (.jpg primary with auto fallback) ─── */
+export function resolvePhotoSrc(name) {
+  if (!name) return ''
+  if (name.startsWith('/') || name.startsWith('http')) return name
+  if (name.includes('.')) return `/images/${name}`
+  return `/images/${name}.jpg`
+}
 
-function PhotoFrame({ name, fi = 0, delay = 0.08, mx, my, depth = 16 }) {
+/* ─── Fine-Art Keepsake Gallery Frame (Curved & Unlabelled) ────────── */
+function PhotoFrame({
+  name,
+  fi = 0,
+  delay = 0.08,
+  mx,
+  my,
+  depth = 12,
+  objectPosition = 'center 38%',
+  onExpand,
+  style = {},
+}) {
   const r = useReducedMotion()
-  const px = useTransform(mx, v => v * depth)
-  const py = useTransform(my, v => v * depth)
+  const [src, setSrc] = useState(() => resolvePhotoSrc(name))
+  const px = useTransform(mx, v => v * 1.5)
+  const py = useTransform(my, v => v * 1.5)
+
+  useEffect(() => {
+    setSrc(resolvePhotoSrc(name))
+  }, [name])
+
+  const handleError = () => {
+    if (src.endsWith('.jpg')) {
+      setSrc(src.replace(/\.jpg$/, '.jpeg'))
+    } else if (src.endsWith('.jpeg')) {
+      setSrc(src.replace(/\.jpeg$/, '.png'))
+    }
+  }
+
   return (
     <motion.figure
+      onClick={onExpand}
+      role={onExpand ? 'button' : undefined}
+      tabIndex={onExpand ? 0 : undefined}
+      onKeyDown={e => onExpand && (e.key === 'Enter' || e.key === ' ') && onExpand()}
+      aria-label={`View photo ${name}`}
       style={{
         position: 'absolute', inset: 0, margin: 0, overflow: 'hidden',
-        ...FRAMES[fi % 4],
-        border: '2px solid rgba(255,255,255,.22)',
-        boxShadow: '0 24px 60px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.1),0 0 70px -12px var(--ac)',
+        borderRadius: style.borderRadius || '24px',
+        border: '2px solid rgba(255,255,255,.45)',
+        boxShadow: '0 20px 48px rgba(0,0,0,.68), 0 0 0 1px rgba(255,255,255,.14), 0 0 32px -4px var(--ac, rgba(255,143,210,0.35))',
+        background: 'linear-gradient(150deg, rgba(255,255,255,0.14) 0%, rgba(20,5,24,0.45) 100%)',
+        cursor: onExpand ? 'pointer' : 'default',
         ...(r ? {} : { x: px, y: py }),
+        ...style,
       }}
-      initial={r ? false : { scale: 0.92, opacity: 0 }}
+      initial={r ? false : { scale: 0.94, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
-      transition={{ duration: 0.38, delay, ease: E }}
-      whileHover={{ scale: 1.03, transition: { duration: 0.25 } }}
+      transition={{ duration: 0.4, delay, ease: E }}
+      whileHover={{
+        scale: 1.025,
+        boxShadow: '0 28px 65px rgba(0,0,0,.85), 0 0 0 1px rgba(255,255,255,.55), 0 0 45px var(--ac)',
+        transition: { duration: 0.22 },
+      }}
     >
+      {/* Ambient background blur for cinematic depth */}
       <img
-        src={`/images/${name}.jpg`} alt={name}
+        src={src}
+        alt=""
+        aria-hidden="true"
+        style={{
+          position: 'absolute', inset: 0, width: '100%', height: '100%',
+          objectFit: 'cover', filter: 'blur(18px) brightness(0.6)',
+          transform: 'scale(1.2)', opacity: 0.55,
+        }}
+      />
+
+      {/* Main photo - uncropped, crisp and beautifully centered */}
+      <img
+        src={src}
+        alt={name}
+        onError={handleError}
         loading="eager" decoding="async"
-        style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: '50% 20%', display: 'block' }}
+        style={{
+          position: 'relative',
+          width: '100%', height: '100%',
+          objectFit: 'cover',
+          objectPosition: objectPosition,
+          display: 'block',
+        }}
+      />
+
+      {/* Luxury Glass Sheen Overlay */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none',
+          background: 'linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.02) 40%, transparent 60%)',
+          borderRadius: 'inherit',
+        }}
       />
     </motion.figure>
   )
 }
 
-/* ─── Collage layouts ───────────────────────────────────────────── */
-function Collage({ imgs, mx, my }) {
+/* ─── Sculpted Blooming Botanical Flower for the Last Page ──────── */
+function FlowerPhotoFrame({ name, mx, my, delay = 0.1, depth = 12, onExpand }) {
+  const r = useReducedMotion()
+  const [src, setSrc] = useState(() => resolvePhotoSrc(name))
+  const px = useTransform(mx, v => v * depth)
+  const py = useTransform(my, v => v * depth)
+
+  useEffect(() => {
+    setSrc(resolvePhotoSrc(name))
+  }, [name])
+
+  const handleError = () => {
+    if (src.endsWith('.jpg')) {
+      setSrc(src.replace(/\.jpg$/, '.jpeg'))
+    } else if (src.endsWith('.jpeg')) {
+      setSrc(src.replace(/\.jpeg$/, '.png'))
+    }
+  }
+
+  // 16 Real Botanical Petals (8 outer sculpted petals + 8 inner offset petals)
+  const outerPetalAngles = [0, 45, 90, 135, 180, 225, 270, 315]
+  const innerPetalAngles = [22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5]
+
+  return (
+    <motion.div
+      onClick={onExpand}
+      role={onExpand ? 'button' : undefined}
+      tabIndex={onExpand ? 0 : undefined}
+      onKeyDown={e => onExpand && (e.key === 'Enter' || e.key === ' ') && onExpand()}
+      aria-label="View flower photo"
+      style={{
+        position: 'relative', width: '100%', height: '100%',
+        cursor: onExpand ? 'pointer' : 'default',
+        ...(r ? {} : { x: px, y: py }),
+      }}
+      initial={r ? false : { scale: 0.9, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ duration: 0.5, delay, ease: E }}
+      whileHover={{ scale: 1.05, transition: { duration: 0.25 } }}
+    >
+      <svg
+        viewBox="0 0 400 400"
+        style={{
+          width: '100%', height: '100%', overflow: 'visible',
+          filter: 'drop-shadow(0 20px 50px rgba(0,0,0,0.75)) drop-shadow(0 0 35px rgba(255,143,210,0.55))',
+        }}
+      >
+        <defs>
+          <linearGradient id="fl-outer-grad" x1="0%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stopColor="#e83a65" stopOpacity="0.88" />
+            <stop offset="55%" stopColor="#ff70a6" stopOpacity="0.92" />
+            <stop offset="100%" stopColor="#ffe4f1" stopOpacity="0.98" />
+          </linearGradient>
+
+          <linearGradient id="fl-inner-grad" x1="0%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stopColor="#ff4d88" stopOpacity="0.92" />
+            <stop offset="60%" stopColor="#ffa0cb" stopOpacity="0.96" />
+            <stop offset="100%" stopColor="#ffffff" stopOpacity="1" />
+          </linearGradient>
+
+          <linearGradient id="fl-gold-rim" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#ffe699" />
+            <stop offset="50%" stopColor="#ffffff" />
+            <stop offset="100%" stopColor="#f39c12" />
+          </linearGradient>
+
+          <clipPath id="fl-center-photo-clip">
+            <circle cx="200" cy="200" r="102" />
+          </clipPath>
+        </defs>
+
+        {/* Ambient backlight */}
+        <circle cx="200" cy="200" r="175" fill="rgba(255,100,160,0.28)" filter="blur(22px)" />
+
+        {/* Tier 1: Outer Blooming Petals with pointed petal tips */}
+        {outerPetalAngles.map(deg => (
+          <g key={`out-${deg}`} transform={`translate(200, 200) rotate(${deg})`}>
+            <path
+              d="M 0 -70 C -38 -110 -46 -155 0 -195 C 46 -155 38 -110 0 -70 Z"
+              fill="url(#fl-outer-grad)"
+              stroke="rgba(255, 235, 245, 0.65)"
+              strokeWidth="1.5"
+            />
+            <line x1="0" y1="-75" x2="0" y2="-182" stroke="rgba(255,255,255,0.35)" strokeWidth="1" />
+          </g>
+        ))}
+
+        {/* Tier 2: Inner Blooming Petals */}
+        {innerPetalAngles.map(deg => (
+          <g key={`in-${deg}`} transform={`translate(200, 200) rotate(${deg})`}>
+            <path
+              d="M 0 -60 C -30 -100 -38 -140 0 -178 C 38 -140 30 -100 0 -60 Z"
+              fill="url(#fl-inner-grad)"
+              stroke="rgba(255, 255, 255, 0.85)"
+              strokeWidth="1.5"
+            />
+            <line x1="0" y1="-65" x2="0" y2="-165" stroke="rgba(255,255,255,0.4)" strokeWidth="1" />
+          </g>
+        ))}
+
+        {/* Golden Central Aperture Medallion Frame Rim (Enlarged) */}
+        <circle
+          cx="200" cy="200" r="136"
+          fill="#160312"
+          stroke="url(#fl-gold-rim)"
+          strokeWidth="3.5"
+        />
+
+        {/* Golden Stamen Ring */}
+        <circle
+          cx="200" cy="200" r="136"
+          fill="none"
+          stroke="rgba(255, 230, 160, 0.75)"
+          strokeWidth="2"
+          strokeDasharray="4 6"
+        />
+
+        {/* Stamen beads along the rim */}
+        {[0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180, 195, 210, 225, 240, 255, 270, 285, 300, 315, 330, 345].map(deg => {
+          const rad = (deg * Math.PI) / 180;
+          const bx = 200 + 136 * Math.cos(rad);
+          const by = 200 + 136 * Math.sin(rad);
+          return (
+            <circle
+              key={deg}
+              cx={bx} cy={by} r="2.5"
+              fill="#fff4d0" stroke="#e67e22" strokeWidth="0.8"
+            />
+          );
+        })}
+      </svg>
+
+      {/* Enlarged Portrait Medallion: Zoomed out so entire face, hair & smile are fully visible */}
+      <div
+        style={{
+          position: 'absolute',
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '68%',
+          height: '68%',
+          borderRadius: '50%',
+          overflow: 'hidden',
+          boxShadow: '0 0 32px rgba(255,143,210,0.65), inset 0 0 16px rgba(0,0,0,0.5)',
+          border: '2.5px solid rgba(255, 230, 160, 0.95)',
+          zIndex: 2,
+        }}
+      >
+        <img
+          src={src}
+          alt={name}
+          onError={handleError}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: '55% 10%',
+            transform: 'scale(1.04)',
+            transformOrigin: 'center center',
+            display: 'block',
+          }}
+        />
+        {/* Soft glass sheen */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.22) 0%, transparent 52%)',
+            borderRadius: '50%',
+          }}
+        />
+      </div>
+
+      {/* Floating flower sparkles */}
+      <span style={{ position: 'absolute', top: '-6px', right: '4px', fontSize: '1.1rem', filter: 'drop-shadow(0 0 6px #ff8fd2)', pointerEvents: 'none' }}>🌸</span>
+      <span style={{ position: 'absolute', bottom: '2px', left: '6px', fontSize: '1.1rem', filter: 'drop-shadow(0 0 6px #ff8fd2)', pointerEvents: 'none' }}>✨</span>
+    </motion.div>
+  )
+}
+
+/* ─── Lightbox Modal (100% Uncropped Full-Screen Inspection) ─────── */
+function Lightbox({ data, onClose, onPrev, onNext }) {
+  const r = useReducedMotion()
+  if (!data) return null
+  const { img, index, imgs, title } = data
+  const hasMultiple = imgs && imgs.length > 1
+  const [currentSrc, setCurrentSrc] = useState(() => resolvePhotoSrc(img))
+
+  useEffect(() => {
+    setCurrentSrc(resolvePhotoSrc(img))
+  }, [img])
+
+  const handleError = () => {
+    if (currentSrc.endsWith('.jpg')) {
+      setCurrentSrc(currentSrc.replace(/\.jpg$/, '.jpeg'))
+    } else if (currentSrc.endsWith('.jpeg')) {
+      setCurrentSrc(currentSrc.replace(/\.jpeg$/, '.png'))
+    }
+  }
+
+  return (
+    <motion.div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Photo preview"
+      onClick={onClose}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.22 }}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 100,
+        background: 'rgba(4, 1, 10, 0.94)',
+        backdropFilter: 'blur(28px)',
+        WebkitBackdropFilter: 'blur(28px)',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        padding: 'clamp(14px, 3svh, 28px)',
+        userSelect: 'none',
+      }}
+    >
+      {/* Top Header */}
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          position: 'absolute',
+          top: 'max(14px, env(safe-area-inset-top, 0px))',
+          left: 0, right: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '0 clamp(16px, 4vw, 36px)',
+          zIndex: 10,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span
+            style={{
+              padding: '.35rem .9rem', borderRadius: 999,
+              background: 'rgba(255,255,255,0.12)',
+              border: '1px solid rgba(255,255,255,0.22)',
+              fontSize: '.82rem', color: '#fff',
+              letterSpacing: '.12em',
+              fontFamily: "'Nunito', sans-serif",
+              fontWeight: 700,
+            }}
+          >
+            {hasMultiple ? `PHOTO ${index + 1} / ${imgs.length}` : 'FULL PHOTO'}
+          </span>
+          {title && (
+            <span style={{ fontSize: '.84rem', color: 'rgba(255,248,246,0.75)', maxWidth: '40vw', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {title}
+            </span>
+          )}
+        </div>
+
+        <button
+          onClick={onClose}
+          aria-label="Close photo preview"
+          style={{
+            width: 44, height: 44, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.16)',
+            border: '1px solid rgba(255,255,255,0.28)',
+            display: 'grid', placeItems: 'center',
+            color: '#fff', fontSize: '1.25rem',
+            cursor: 'pointer',
+          }}
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* Main Image Container */}
+      <motion.div
+        onClick={e => e.stopPropagation()}
+        key={img}
+        initial={r ? false : { scale: 0.94, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.94, opacity: 0 }}
+        transition={{ duration: 0.25, ease: E }}
+        style={{
+          position: 'relative',
+          maxWidth: 'min(94vw, 880px)',
+          maxHeight: '78svh',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          margin: 'auto',
+        }}
+      >
+        <img
+          src={currentSrc}
+          alt={img}
+          onError={handleError}
+          style={{
+            maxWidth: '100%', maxHeight: '78svh',
+            width: 'auto', height: 'auto',
+            objectFit: 'contain',
+            borderRadius: '16px',
+            border: '2px solid rgba(255,255,255,0.3)',
+            boxShadow: '0 25px 80px rgba(0,0,0,0.85), 0 0 50px -10px var(--ac, rgba(255,143,210,0.5))',
+            display: 'block',
+          }}
+        />
+      </motion.div>
+
+      {/* Prev / Next controls */}
+      {hasMultiple && (
+        <>
+          <button
+            onClick={e => { e.stopPropagation(); onPrev() }}
+            aria-label="Previous photo"
+            style={{
+              position: 'absolute', left: 'clamp(8px, 2.5vw, 24px)', top: '50%',
+              transform: 'translateY(-50%)',
+              width: 48, height: 48, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.14)', backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255,255,255,0.25)',
+              color: '#fff', fontSize: '1.6rem',
+              display: 'grid', placeItems: 'center',
+              cursor: 'pointer', zIndex: 10,
+            }}
+          >
+            ‹
+          </button>
+          <button
+            onClick={e => { e.stopPropagation(); onNext() }}
+            aria-label="Next photo"
+            style={{
+              position: 'absolute', right: 'clamp(8px, 2.5vw, 24px)', top: '50%',
+              transform: 'translateY(-50%)',
+              width: 48, height: 48, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.14)', backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255,255,255,0.25)',
+              color: '#fff', fontSize: '1.6rem',
+              display: 'grid', placeItems: 'center',
+              cursor: 'pointer', zIndex: 10,
+            }}
+          >
+            ›
+          </button>
+        </>
+      )}
+
+      {/* Bottom Hint */}
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          position: 'absolute', bottom: 'max(14px, env(safe-area-inset-bottom, 0px))',
+          left: '50%', transform: 'translateX(-50%)',
+          textAlign: 'center', pointerEvents: 'none',
+        }}
+      >
+        <p style={{ margin: 0, fontSize: '.78rem', color: 'rgba(255,248,246,0.65)', letterSpacing: '.12em', fontFamily: "'Nunito', sans-serif" }}>
+          tap anywhere outside to close ✦
+        </p>
+      </div>
+    </motion.div>
+  )
+}
+
+/* ─── Organic Fine-Art Scrapbook Collage (Curved, Overlapped & Tilted) ─ */
+function Collage({ imgs, mx, my, onOpenLightbox }) {
   const n = imgs.length
   const accent = 'var(--ac)'
-  if (n === 1) return (
-    <div style={{ position: 'relative', width: 'min(95%,420px)', aspectRatio: '3/4', margin: 'auto' }}>
-      <PhotoFrame name={imgs[0]} fi={0} delay={0.06} mx={mx} my={my} depth={12} />
-    </div>
-  )
-  if (n === 2) return (
-    <div style={{ position: 'relative', width: 'min(98%,520px)', aspectRatio: '1/1.1', margin: 'auto' }}>
-      <div style={{ position: 'absolute', left: 0, top: 0, width: '66%', height: '74%' }}>
-        <PhotoFrame name={imgs[0]} fi={0} delay={0.06} mx={mx} my={my} depth={14} />
+  const [hoveredIdx, setHoveredIdx] = useState(null)
+
+  if (n === 1) {
+    return (
+      <div
+        style={{
+          position: 'relative',
+          width: 'min(92vw, 360px)',
+          aspectRatio: '3/4',
+          margin: '0 auto',
+          overflow: 'visible',
+        }}
+      >
+        <motion.div
+          initial={{ rotate: -1.8 }}
+          whileHover={{ scale: 1.04, rotate: 0, y: -5, zIndex: 10 }}
+          transition={{ duration: 0.25, ease: E }}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            transformOrigin: 'center center',
+          }}
+        >
+          <PhotoFrame
+            name={imgs[0]}
+            delay={0.06}
+            mx={mx}
+            my={my}
+            depth={12}
+            onExpand={() => onOpenLightbox?.(imgs[0], 0)}
+          />
+        </motion.div>
       </div>
-      <div style={{ position: 'absolute', right: 0, bottom: 0, width: '58%', height: '63%', zIndex: 2 }}>
-        <PhotoFrame name={imgs[1]} fi={1} delay={0.12} mx={mx} my={my} depth={22} />
+    )
+  }
+
+  if (n === 2) {
+    // 2 Photos (Sunflower & Lotus):
+    // Curved, slightly overlapping in center (~8%), with complementary organic tilts
+    return (
+      <div
+        style={{
+          position: 'relative',
+          width: 'min(94vw, 480px)',
+          aspectRatio: '1.18 / 1',
+          margin: '0 auto',
+          overflow: 'visible',
+        }}
+      >
+        {/* Left card - tilted counter-clockwise */}
+        <motion.div
+          onMouseEnter={() => setHoveredIdx(0)}
+          onMouseLeave={() => setHoveredIdx(null)}
+          initial={{ rotate: -3.2 }}
+          whileHover={{ scale: 1.05, rotate: 0, y: -6, zIndex: 12 }}
+          transition={{ duration: 0.25, ease: E }}
+          style={{
+            position: 'absolute',
+            left: '0%',
+            top: '2%',
+            width: '54%',
+            height: '92%',
+            zIndex: hoveredIdx === 0 ? 12 : 2,
+            transformOrigin: 'center center',
+          }}
+        >
+          <PhotoFrame
+            name={imgs[0]}
+            delay={0.06}
+            mx={mx}
+            my={my}
+            depth={12}
+            onExpand={() => onOpenLightbox?.(imgs[0], 0)}
+          />
+        </motion.div>
+
+        {/* Right card - tilted clockwise, slightly overlapping left card */}
+        <motion.div
+          onMouseEnter={() => setHoveredIdx(1)}
+          onMouseLeave={() => setHoveredIdx(null)}
+          initial={{ rotate: 3.5 }}
+          whileHover={{ scale: 1.05, rotate: 0, y: -6, zIndex: 12 }}
+          transition={{ duration: 0.25, ease: E }}
+          style={{
+            position: 'absolute',
+            right: '0%',
+            bottom: '2%',
+            width: '54%',
+            height: '92%',
+            zIndex: hoveredIdx === 1 ? 12 : 3,
+            transformOrigin: 'center center',
+          }}
+        >
+          <PhotoFrame
+            name={imgs[1]}
+            delay={0.12}
+            mx={mx}
+            my={my}
+            depth={16}
+            onExpand={() => onOpenLightbox?.(imgs[1], 1)}
+          />
+        </motion.div>
+
+        <motion.div
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 0.3 }}
+          transition={{ delay: 0.1, duration: 0.4, ease: E }}
+          style={{
+            position: 'absolute', left: '50%', top: '50%',
+            transform: 'translate(-50%,-50%)',
+            width: 'clamp(50px, 12vw, 80px)', height: 'clamp(50px, 12vw, 80px)',
+            borderRadius: '50%', background: accent,
+            filter: 'blur(30px)', zIndex: 0, pointerEvents: 'none',
+          }}
+        />
       </div>
-      <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 0.35 }} transition={{ delay: 0.1, duration: 0.4, ease: E }}
-        style={{ position: 'absolute', right: '20%', top: '28%', width: 'clamp(40px,9vw,60px)', height: 'clamp(40px,9vw,60px)', borderRadius: '50%', background: accent, filter: 'blur(20px)', zIndex: 0 }} />
-    </div>
-  )
-  if (n === 3) return (
-    <div style={{ position: 'relative', width: 'min(98%,540px)', aspectRatio: '1/1.08', margin: 'auto' }}>
-      <div style={{ position: 'absolute', left: 0, top: '6%', width: '58%', height: '62%', zIndex: 2 }}>
-        <PhotoFrame name={imgs[0]} fi={0} delay={0.06} mx={mx} my={my} depth={12} />
+    )
+  }
+
+  if (n === 3) {
+    // 3 Photos (Rose):
+    // Top hero: rose-1 (curved, unlabelled, face & henna & saree clearly visible, tilted -2°)
+    // Bottom: rose-2 & rose-3 overlapping rose-1 vertically and each other horizontally
+    return (
+      <div
+        style={{
+          position: 'relative',
+          width: 'min(96vw, 510px)',
+          aspectRatio: '1 / 1.06',
+          margin: '0 auto',
+          overflow: 'visible',
+        }}
+      >
+        {/* Top: Landscape Hero Card (rose-1) */}
+        <motion.div
+          onMouseEnter={() => setHoveredIdx(0)}
+          onMouseLeave={() => setHoveredIdx(null)}
+          initial={{ rotate: -2.0 }}
+          whileHover={{ scale: 1.04, rotate: 0, y: -6, zIndex: 12 }}
+          transition={{ duration: 0.25, ease: E }}
+          style={{
+            position: 'absolute',
+            left: '2%',
+            top: '2%',
+            width: '96%',
+            height: '54%',
+            zIndex: hoveredIdx === 0 ? 12 : 2,
+            transformOrigin: 'center center',
+          }}
+        >
+          <PhotoFrame
+            name={imgs[0]}
+            delay={0.06}
+            mx={mx}
+            my={my}
+            depth={10}
+            objectPosition="center 38%"
+            onExpand={() => onOpenLightbox?.(imgs[0], 0)}
+          />
+        </motion.div>
+
+        {/* Bottom Left: Portrait Card (rose-2 - pizza smile) */}
+        <motion.div
+          onMouseEnter={() => setHoveredIdx(1)}
+          onMouseLeave={() => setHoveredIdx(null)}
+          initial={{ rotate: 2.6 }}
+          whileHover={{ scale: 1.05, rotate: 0, y: -6, zIndex: 12 }}
+          transition={{ duration: 0.25, ease: E }}
+          style={{
+            position: 'absolute',
+            left: '2%',
+            bottom: '2%',
+            width: '52%',
+            height: '50%',
+            zIndex: hoveredIdx === 1 ? 12 : 3,
+            transformOrigin: 'center center',
+          }}
+        >
+          <PhotoFrame
+            name={imgs[1]}
+            delay={0.12}
+            mx={mx}
+            my={my}
+            depth={14}
+            objectPosition="center center"
+            onExpand={() => onOpenLightbox?.(imgs[1], 1)}
+          />
+        </motion.div>
+
+        {/* Bottom Right: Portrait Card (rose-3 - traditional outfit) */}
+        <motion.div
+          onMouseEnter={() => setHoveredIdx(2)}
+          onMouseLeave={() => setHoveredIdx(null)}
+          initial={{ rotate: -2.4 }}
+          whileHover={{ scale: 1.05, rotate: 0, y: -6, zIndex: 12 }}
+          transition={{ duration: 0.25, ease: E }}
+          style={{
+            position: 'absolute',
+            right: '2%',
+            bottom: '2%',
+            width: '52%',
+            height: '50%',
+            zIndex: hoveredIdx === 2 ? 12 : 4,
+            transformOrigin: 'center center',
+          }}
+        >
+          <PhotoFrame
+            name={imgs[2]}
+            delay={0.18}
+            mx={mx}
+            my={my}
+            depth={14}
+            objectPosition="center 22%"
+            onExpand={() => onOpenLightbox?.(imgs[2], 2)}
+          />
+        </motion.div>
+
+        <motion.div
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 0.28 }}
+          transition={{ delay: 0.12, duration: 0.4, ease: E }}
+          style={{
+            position: 'absolute', left: '50%', bottom: '22%',
+            transform: 'translate(-50%,0)',
+            width: 'clamp(50px, 12vw, 80px)', height: 'clamp(50px, 12vw, 80px)',
+            borderRadius: '50%', background: accent,
+            filter: 'blur(30px)', zIndex: 0, pointerEvents: 'none',
+          }}
+        />
       </div>
-      <div style={{ position: 'absolute', right: 0, top: 0, width: '44%', height: '46%', zIndex: 1 }}>
-        <PhotoFrame name={imgs[1]} fi={3} delay={0.12} mx={mx} my={my} depth={20} />
-      </div>
-      <div style={{ position: 'absolute', right: '3%', bottom: 0, width: '56%', height: '46%', zIndex: 3 }}>
-        <PhotoFrame name={imgs[2]} fi={2} delay={0.18} mx={mx} my={my} depth={18} />
-      </div>
-    </div>
-  )
+    )
+  }
+
+  // 4 Photos (Waterlily):
+  // 4 curved, overlapping, tilted scrapbook cards
   return (
-    <div style={{ position: 'relative', width: 'min(98%,550px)', aspectRatio: '1/1.02', margin: 'auto' }}>
-      <div style={{ position: 'absolute', left: 0, top: 0, width: '50%', height: '52%' }}>
-        <PhotoFrame name={imgs[0]} fi={0} delay={0.05} mx={mx} my={my} depth={10} />
-      </div>
-      <div style={{ position: 'absolute', right: 0, top: '5%', width: '46%', height: '46%' }}>
-        <PhotoFrame name={imgs[1]} fi={3} delay={0.10} mx={mx} my={my} depth={18} />
-      </div>
-      <div style={{ position: 'absolute', left: '4%', bottom: 0, width: '44%', height: '44%' }}>
-        <PhotoFrame name={imgs[2]} fi={1} delay={0.15} mx={mx} my={my} depth={14} />
-      </div>
-      <div style={{ position: 'absolute', right: 0, bottom: 0, width: '50%', height: '46%' }}>
-        <PhotoFrame name={imgs[3]} fi={2} delay={0.20} mx={mx} my={my} depth={20} />
-      </div>
+    <div
+      style={{
+        position: 'relative',
+        width: 'min(96vw, 490px)',
+        aspectRatio: '1 / 1.05',
+        margin: '0 auto',
+        overflow: 'visible',
+      }}
+    >
+      {/* Top Left */}
+      <motion.div
+        onMouseEnter={() => setHoveredIdx(0)}
+        onMouseLeave={() => setHoveredIdx(null)}
+        initial={{ rotate: -2.6 }}
+        whileHover={{ scale: 1.06, rotate: 0, y: -6, zIndex: 12 }}
+        transition={{ duration: 0.25, ease: E }}
+        style={{
+          position: 'absolute',
+          left: '1%',
+          top: '1%',
+          width: '53%',
+          height: '52%',
+          zIndex: hoveredIdx === 0 ? 12 : 2,
+          transformOrigin: 'center center',
+        }}
+      >
+        <PhotoFrame
+          name={imgs[0]}
+          delay={0.05}
+          mx={mx}
+          my={my}
+          depth={10}
+          onExpand={() => onOpenLightbox?.(imgs[0], 0)}
+        />
+      </motion.div>
+
+      {/* Top Right (lily-2) */}
+      <motion.div
+        onMouseEnter={() => setHoveredIdx(1)}
+        onMouseLeave={() => setHoveredIdx(null)}
+        initial={{ rotate: 2.8 }}
+        whileHover={{ scale: 1.06, rotate: 0, y: -6, zIndex: 12 }}
+        transition={{ duration: 0.25, ease: E }}
+        style={{
+          position: 'absolute',
+          right: '1%',
+          top: '7%',
+          width: '53%',
+          height: '52%',
+          zIndex: hoveredIdx === 1 ? 12 : 3,
+          transformOrigin: 'center center',
+        }}
+      >
+        <PhotoFrame
+          name={imgs[1]}
+          delay={0.10}
+          mx={mx}
+          my={my}
+          depth={12}
+          objectPosition="center 14%"
+          onExpand={() => onOpenLightbox?.(imgs[1], 1)}
+        />
+      </motion.div>
+
+      {/* Bottom Left */}
+      <motion.div
+        onMouseEnter={() => setHoveredIdx(2)}
+        onMouseLeave={() => setHoveredIdx(null)}
+        initial={{ rotate: 2.4 }}
+        whileHover={{ scale: 1.06, rotate: 0, y: -6, zIndex: 12 }}
+        transition={{ duration: 0.25, ease: E }}
+        style={{
+          position: 'absolute',
+          left: '2%',
+          bottom: '1%',
+          width: '53%',
+          height: '52%',
+          zIndex: hoveredIdx === 2 ? 12 : 4,
+          transformOrigin: 'center center',
+        }}
+      >
+        <PhotoFrame
+          name={imgs[2]}
+          delay={0.15}
+          mx={mx}
+          my={my}
+          depth={10}
+          onExpand={() => onOpenLightbox?.(imgs[2], 2)}
+        />
+      </motion.div>
+
+      {/* Bottom Right */}
+      <motion.div
+        onMouseEnter={() => setHoveredIdx(3)}
+        onMouseLeave={() => setHoveredIdx(null)}
+        initial={{ rotate: -2.5 }}
+        whileHover={{ scale: 1.06, rotate: 0, y: -6, zIndex: 12 }}
+        transition={{ duration: 0.25, ease: E }}
+        style={{
+          position: 'absolute',
+          right: '1%',
+          bottom: '1%',
+          width: '53%',
+          height: '52%',
+          zIndex: hoveredIdx === 3 ? 12 : 5,
+          transformOrigin: 'center center',
+        }}
+      >
+        <PhotoFrame
+          name={imgs[3]}
+          delay={0.20}
+          mx={mx}
+          my={my}
+          depth={12}
+          onExpand={() => onOpenLightbox?.(imgs[3], 3)}
+        />
+      </motion.div>
+
+      <motion.div
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 0.25 }}
+        transition={{ delay: 0.1, duration: 0.4, ease: E }}
+        style={{
+          position: 'absolute', left: '50%', top: '50%',
+          transform: 'translate(-50%,-50%)',
+          width: 'clamp(50px, 12vw, 80px)', height: 'clamp(50px, 12vw, 80px)',
+          borderRadius: '50%', background: accent,
+          filter: 'blur(30px)', zIndex: 0, pointerEvents: 'none',
+        }}
+      />
     </div>
   )
 }
@@ -560,9 +1329,8 @@ function LandingPage({ onOpen }) {
 /* ─── Grand Finale Slide (Slide 05 - Flower & Cake Finale) ───────── */
 function FinaleSlide({ c, onFind, onReplay, muted, smx, smy, direction = 1 }) {
   const r = useReducedMotion()
+  const mob = useIsMobile()
   const accent = c.palette.accent
-  const bgX = useTransform(smx, v => `${50 + v * -2}%`)
-  const bgY = useTransform(smy, v => `${50 + v * -2}%`)
 
   return (
     <motion.section
@@ -571,19 +1339,21 @@ function FinaleSlide({ c, onFind, onReplay, muted, smx, smy, direction = 1 }) {
         '--ac': accent,
         position: 'fixed', inset: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: 'max(76px, 12svh) clamp(16px, 4vw, 56px) max(48px, 8svh)',
+        padding: mob
+          ? 'clamp(44px, 6.5svh, 60px) clamp(12px, 3vw, 24px) clamp(44px, 6svh, 56px)'
+          : 'clamp(52px, 8svh, 76px) clamp(20px, 3.5vw, 52px) clamp(40px, 6svh, 64px)',
         overflow: 'hidden', isolation: 'isolate',
       }}
-      initial={{ opacity: 0, y: direction * 20 }}
+      initial={{ opacity: 0, y: direction * 15 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -direction * 20 }}
-      transition={{ duration: r ? 0 : 0.28, ease: E }}
+      exit={{ opacity: 0, y: -direction * 15 }}
+      transition={{ duration: r ? 0 : 0.22, ease: [0.25, 1, 0.5, 1] }}
     >
-      {/* Background layers */}
-      <motion.div aria-hidden="true" style={{ position: 'absolute', inset: '-10%', zIndex: 0, willChange: 'background-position' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${c.palette.bg.m})`, backgroundSize: 'cover' }} className={`bg-img bg-m-${c.id}`} />
-        <motion.div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${c.palette.bg.d})`, backgroundSize: 'cover', backgroundPositionX: bgX, backgroundPositionY: bgY }} className={`bg-img bg-d-${c.id}`} />
-      </motion.div>
+      {/* Background layers - stationary and calm */}
+      <div aria-hidden="true" style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${c.palette.bg.m})`, backgroundSize: 'cover', backgroundPosition: 'center center' }} className={`bg-img bg-m-${c.id}`} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${c.palette.bg.d})`, backgroundSize: 'cover', backgroundPosition: 'center center' }} className={`bg-img bg-d-${c.id}`} />
+      </div>
 
       {/* Radiant Veil */}
       <div aria-hidden="true" style={{
@@ -593,9 +1363,43 @@ function FinaleSlide({ c, onFind, onReplay, muted, smx, smy, direction = 1 }) {
 
       <Particles palette={c.palette} count={c.palette.count} mode={c.palette.mode} active />
 
-      {/* Floating Quotes placed safely in corners */}
-      <QuotePill text={c.quotes[0]} delay={0.12} style={{ top: 'clamp(68px, 10svh, 90px)', left: 'clamp(12px, 3vw, 42px)' }} />
-      <QuotePill text={c.quotes[1]} delay={0.22} style={{ bottom: 'clamp(54px, 8svh, 80px)', right: 'clamp(12px, 3vw, 42px)' }} />
+      {/* Floating Quotes placed safely around the scene */}
+      <QuotePill
+        text={c.quotes[0]}
+        delay={0.12}
+        floatDuration={4.4}
+        style={{
+          top: mob ? 'max(8px, env(safe-area-inset-top, 0px))' : 'clamp(60px, 8.5svh, 86px)',
+          left: mob ? '10px' : 'clamp(12px, 3vw, 38px)',
+          maxWidth: mob ? 'min(46vw, 175px)' : 'min(38vw, 310px)',
+          fontSize: mob ? '.68rem' : undefined,
+          padding: mob ? '.25rem .6rem' : undefined,
+        }}
+      />
+      <QuotePill
+        text={c.quotes[2] || '“keep smiling kandha 😊😊”'}
+        delay={0.20}
+        floatDuration={5.2}
+        style={{
+          top: mob ? 'max(8px, env(safe-area-inset-top, 0px))' : 'clamp(60px, 8.5svh, 86px)',
+          right: mob ? '10px' : 'clamp(12px, 3vw, 38px)',
+          maxWidth: mob ? 'min(46vw, 175px)' : 'min(38vw, 310px)',
+          fontSize: mob ? '.68rem' : undefined,
+          padding: mob ? '.25rem .6rem' : undefined,
+        }}
+      />
+      {!mob && (
+        <QuotePill
+          text={c.quotes[1]}
+          delay={0.28}
+          floatDuration={4.8}
+          style={{
+            bottom: 'clamp(50px, 7.5svh, 74px)',
+            right: 'clamp(12px, 3vw, 38px)',
+            maxWidth: 'min(42vw, 320px)',
+          }}
+        />
+      )}
 
       {/* Main Center Container */}
       <div
@@ -603,36 +1407,21 @@ function FinaleSlide({ c, onFind, onReplay, muted, smx, smy, direction = 1 }) {
           position: 'relative',
           zIndex: 2,
           width: '100%',
-          maxWidth: 960,
+          maxWidth: 1060,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 'clamp(0.25rem, 1.2svh, 0.75rem)',
+          gap: 'clamp(0.2rem, 1svh, 0.55rem)',
           textAlign: 'center',
         }}
       >
-        <FadeUp delay={0.02}>
-          <p style={{
-            fontFamily: "'Nunito', sans-serif",
-            fontWeight: 700,
-            fontSize: '.72rem',
-            letterSpacing: '.28em',
-            color: 'var(--ac)',
-            opacity: 0.9,
-            marginBottom: '.15em',
-            textTransform: 'uppercase',
-          }}>
-            {c.n} / 05 &nbsp;✦&nbsp; Pink Blossom Finale
-          </p>
-        </FadeUp>
-
         {/* Clean, Elegant Birthday Headline */}
         <h2
           style={{
             fontFamily: "'Pacifico', cursive",
             fontWeight: 400,
-            fontSize: 'clamp(1.45rem, 4.8vw, 2.7rem)',
+            fontSize: mob ? 'clamp(1.35rem, 4.2vw, 1.85rem)' : 'clamp(1.55rem, 3.8vw, 2.5rem)',
             lineHeight: 1.25,
             textWrap: 'balance',
             textShadow: '0 2px 28px rgba(0,0,0,.85), 0 0 35px var(--ac)',
@@ -640,20 +1429,20 @@ function FinaleSlide({ c, onFind, onReplay, muted, smx, smy, direction = 1 }) {
             color: 'var(--ac)',
           }}
         >
-          Happy Birthday, chinnamma 🌸
+          Happy Birthday, chinnamma 💖
         </h2>
 
         {/* Heartfelt Birthday Message */}
-        <FadeUp delay={0.06}>
+        <FadeUp delay={0.04}>
           <p
             style={{
               fontFamily: "'Nunito', sans-serif",
               fontWeight: 600,
-              fontSize: 'clamp(0.92rem, 2.4vw, 1.15rem)',
-              lineHeight: 1.45,
+              fontSize: mob ? 'clamp(0.82rem, 2.1vw, 0.95rem)' : 'clamp(0.88rem, 2vw, 1.08rem)',
+              lineHeight: 1.4,
               color: 'rgba(255,248,246,0.92)',
               textShadow: '0 2px 18px rgba(0,0,0,0.8)',
-              maxWidth: '44ch',
+              maxWidth: '46ch',
               margin: '0 auto',
             }}
           >
@@ -661,14 +1450,47 @@ function FinaleSlide({ c, onFind, onReplay, muted, smx, smy, direction = 1 }) {
           </p>
         </FadeUp>
 
-        {/* THE ELEGANT 3D CAKE */}
-        <FadeUp delay={0.12} style={{ width: '100%', position: 'relative' }}>
-          <ThreeCake
-            onWish={() => onFind('cake', 'May all your wishes come true, chinnamma 💝')}
-            accent={accent}
-            muted={muted}
-          />
-        </FadeUp>
+        {/* Showcase Row: Framed Flower Photo + 3D Cake */}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: mob ? 'column' : 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: mob ? 'clamp(8px, 1.6svh, 16px)' : 'clamp(28px, 4.5vw, 60px)',
+            width: '100%',
+            marginTop: 'clamp(2px, 0.6svh, 8px)',
+          }}
+        >
+          {/* Authentic Blooming Flower Photo Frame on the Last Page */}
+          <FadeUp delay={0.08} style={{ display: 'flex', justifyContent: 'center' }}>
+            <div
+              style={{
+                position: 'relative',
+                width: mob ? 'min(245px, 62vw)' : 'min(330px, 29vw)',
+                aspectRatio: '1/1',
+              }}
+            >
+              <FlowerPhotoFrame
+                name={c.imgs?.[0] || 'pink-1'}
+                delay={0.1}
+                mx={smx}
+                my={smy}
+                depth={12}
+                onExpand={() => onOpenLightbox?.(c.imgs?.[0] || 'pink-1', 0, c.imgs, c.title)}
+              />
+            </div>
+          </FadeUp>
+
+          {/* THE ELEGANT 3D CAKE */}
+          <FadeUp delay={0.12} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <ThreeCake
+              onWish={() => onFind('cake', 'May all your wishes come true, chinnamma 💝')}
+              accent={accent}
+              muted={muted}
+            />
+          </FadeUp>
+        </div>
 
         {/* Replay button */}
         <FadeUp delay={0.18}>
@@ -682,16 +1504,14 @@ function FinaleSlide({ c, onFind, onReplay, muted, smx, smy, direction = 1 }) {
 }
 
 /* ─── Flower Slide (Slides 01 - 04) ─────────────────────────────── */
-function Slide({ c, idx, onFind, onReplay, muted, direction = 1 }) {
+function Slide({ c, idx, onFind, onReplay, muted, direction = 1, onOpenLightbox }) {
   const r = useReducedMotion()
   const mob = useIsMobile()
   const mx = useMotionValue(0), my = useMotionValue(0)
   const smx = useSpring(mx, { stiffness: 34, damping: 22 })
   const smy = useSpring(my, { stiffness: 34, damping: 22 })
-  const bgX = useTransform(smx, v => `${50 + v * -2.2}%`)
-  const bgY = useTransform(smy, v => `${50 + v * -2.2}%`)
-  const cardRX = useTransform(smx, v => mob ? 0 : v * -7)
-  const cardRY = useTransform(smy, v => mob ? 0 : v * 6)
+  const cardRX = useTransform(smx, v => mob ? 0 : v * -1.5)
+  const cardRY = useTransform(smy, v => mob ? 0 : v * 1.2)
   const flip = idx % 2 !== 0
 
   useEffect(() => {
@@ -706,7 +1526,7 @@ function Slide({ c, idx, onFind, onReplay, muted, direction = 1 }) {
   }, [r, mob])
 
   if (c.last) {
-    return <FinaleSlide c={c} onFind={onFind} onReplay={onReplay} muted={muted} smx={smx} smy={smy} direction={direction} />
+    return <FinaleSlide c={c} onFind={onFind} onReplay={onReplay} muted={muted} smx={smx} smy={smy} direction={direction} onOpenLightbox={onOpenLightbox} />
   }
 
   return (
@@ -719,16 +1539,16 @@ function Slide({ c, idx, onFind, onReplay, muted, direction = 1 }) {
         padding: 'clamp(56px,9svh,96px) clamp(18px,4vw,68px) clamp(82px,11svh,108px)',
         overflow: 'hidden', isolation: 'isolate',
       }}
-      initial={{ opacity: 0, y: direction * 20 }}
+      initial={{ opacity: 0, y: direction * 15 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -direction * 20 }}
-      transition={{ duration: r ? 0 : 0.28, ease: E }}
+      exit={{ opacity: 0, y: -direction * 15 }}
+      transition={{ duration: r ? 0 : 0.22, ease: [0.25, 1, 0.5, 1] }}
     >
-      {/* Background */}
-      <motion.div aria-hidden="true" style={{ position: 'absolute', inset: '-10%', zIndex: 0, willChange: 'background-position' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${c.palette.bg.m})`, backgroundSize: 'cover' }} className={`bg-img bg-m-${c.id}`} />
-        <motion.div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${c.palette.bg.d})`, backgroundSize: 'cover', backgroundPositionX: bgX, backgroundPositionY: bgY }} className={`bg-img bg-d-${c.id}`} />
-      </motion.div>
+      {/* Background - stationary and calm */}
+      <div aria-hidden="true" style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${c.palette.bg.m})`, backgroundSize: 'cover', backgroundPosition: 'center center' }} className={`bg-img bg-m-${c.id}`} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${c.palette.bg.d})`, backgroundSize: 'cover', backgroundPosition: 'center center' }} className={`bg-img bg-d-${c.id}`} />
+      </div>
 
       {/* Veil */}
       <div aria-hidden="true" style={{
@@ -738,9 +1558,63 @@ function Slide({ c, idx, onFind, onReplay, muted, direction = 1 }) {
 
       <Particles palette={c.palette} count={c.palette.count} mode={c.palette.mode} active images={c.imgs} />
 
-      {/* Floating quote pills */}
-      <QuotePill text={c.quotes[0]} delay={0.12} style={{ top: 'max(14px,env(safe-area-inset-top,0px))', left: '50%', transform: 'translateX(-50%)' }} />
-      <QuotePill text={c.quotes[1]} delay={0.22} style={{ bottom: 'max(56px,env(safe-area-inset-bottom,0px))', left: '50%', transform: 'translateX(-50%)' }} />
+      {/* Floating quote pills - safely positioned on the copy/text side away from photos */}
+      {c.quotes?.[0] && (
+        <QuotePill
+          text={c.quotes[0]}
+          delay={0.12}
+          style={
+            mob
+              ? {
+                  top: 'max(8px, env(safe-area-inset-top, 0px))',
+                  left: '50%',
+                  right: 'auto',
+                  transform: 'translateX(-50%)',
+                  maxWidth: 'min(92vw, 360px)',
+                  fontSize: 'clamp(0.68rem, 2.2vw, 0.78rem)',
+                  padding: '0.3rem 0.8rem',
+                }
+              : flip
+              ? {
+                  top: 'max(16px, env(safe-area-inset-top, 0px))',
+                  right: 'clamp(20px, 4.5vw, 64px)',
+                  left: 'auto',
+                  transform: 'none',
+                  maxWidth: 'clamp(320px, 38vw, 540px)',
+                }
+              : {
+                  top: 'max(16px, env(safe-area-inset-top, 0px))',
+                  left: 'clamp(20px, 4.5vw, 64px)',
+                  right: 'auto',
+                  transform: 'none',
+                  maxWidth: 'clamp(320px, 38vw, 540px)',
+                }
+          }
+        />
+      )}
+      {!mob && c.quotes?.[1] && (
+        <QuotePill
+          text={c.quotes[1]}
+          delay={0.22}
+          style={
+            flip
+              ? {
+                  bottom: 'max(18px, env(safe-area-inset-bottom, 0px))',
+                  right: 'clamp(20px, 4.5vw, 64px)',
+                  left: 'auto',
+                  transform: 'none',
+                  maxWidth: 'clamp(320px, 38vw, 540px)',
+                }
+              : {
+                  bottom: 'max(18px, env(safe-area-inset-bottom, 0px))',
+                  left: 'clamp(20px, 4.5vw, 64px)',
+                  right: 'auto',
+                  transform: 'none',
+                  maxWidth: 'clamp(320px, 38vw, 540px)',
+                }
+          }
+        />
+      )}
 
       {/* Easter egg */}
       {c.egg && (
@@ -790,6 +1664,23 @@ function Slide({ c, idx, onFind, onReplay, muted, direction = 1 }) {
               }}>{c.message}</p>
             </FadeUp>
           )}
+          {mob && c.quotes?.[1] && (
+            <FadeUp delay={0.11}>
+              <p style={{
+                fontFamily: "'Nunito', sans-serif",
+                fontStyle: 'italic',
+                fontWeight: 600,
+                fontSize: 'clamp(0.74rem, 2.3vw, 0.86rem)',
+                lineHeight: 1.45,
+                color: 'rgba(255,240,245,0.82)',
+                margin: '0.65rem auto 0',
+                maxWidth: '42ch',
+                textWrap: 'balance',
+              }}>
+                {c.quotes[1]}
+              </p>
+            </FadeUp>
+          )}
           {c.hint && (
             <FadeUp delay={0.14}>
               <p style={{ fontFamily: "'Nunito', sans-serif", fontWeight: 600, fontSize: '.87rem', letterSpacing: '.14em', opacity: 0.75, marginTop: '1.1rem' }}>
@@ -801,7 +1692,7 @@ function Slide({ c, idx, onFind, onReplay, muted, direction = 1 }) {
         </div>
 
         <div style={{ gridArea: 'photo', display: 'grid', placeItems: 'center' }} className="photo-side">
-          <Collage imgs={c.imgs} mx={smx} my={smy} />
+          <Collage imgs={c.imgs} mx={smx} my={smy} onOpenLightbox={(img, idx) => onOpenLightbox?.(img, idx, c.imgs, c.title)} />
         </div>
       </motion.div>
     </motion.section>
@@ -854,13 +1745,17 @@ export default function App() {
   const [found, setFound] = useState([])
   const [toast, setToast] = useState(null)
   const [opened, setOpened] = useState(false)
+  const [lightbox, setLightbox] = useState(null)
+  const lightboxRef = useRef(null)
+  lightboxRef.current = lightbox
+
   const N = chapters.length
   const lockUntil = useRef(0)
   const curRef = useRef(0)
   const tt = useRef()
   useAudio(cur, muted)
 
-  // Preload all assets in browser memory so slide loading is instant
+  // Preload all assets in browser memory (.jpg primary)
   useEffect(() => {
     const bgs = [
       '/bg/rose-d.jpg', '/bg/rose-m.jpg',
@@ -870,11 +1765,11 @@ export default function App() {
       '/bg/pink-d.jpg', '/bg/pink-m.jpg',
     ]
     const imgs = [
-      'rose-1', 'rose-2', 'rose-3',
-      'sunflower-1', 'sunflower-2',
-      'lily-1', 'lily-2', 'lily-3', 'lily-4',
-      'lotus-1', 'lotus-2', 'pink-1'
-    ].map(n => `/images/${n}.jpg`)
+      '/images/rose-1.jpg', '/images/rose-2.jpg', '/images/rose-3.jpg',
+      '/images/sunflower-1.jpg', '/images/sunflower-2.jpg',
+      '/images/lily-1.jpg', '/images/lily-2.jpg', '/images/lily-3.jpg', '/images/lily-4.jpg',
+      '/images/lotus-1.jpg', '/images/lotus-2.jpg', '/images/pink-1.jpg',
+    ]
 
     ;[...bgs, ...imgs].forEach(src => {
       const img = new Image()
@@ -882,12 +1777,41 @@ export default function App() {
     })
   }, [])
 
+  const handleOpenLightbox = useCallback((imgName, idx, imgsList, title) => {
+    setLightbox({
+      img: imgName,
+      index: idx >= 0 ? idx : 0,
+      imgs: imgsList || [imgName],
+      title: title || '',
+    })
+  }, [])
+
+  const handleCloseLightbox = useCallback(() => {
+    setLightbox(null)
+  }, [])
+
+  const handlePrevLightbox = useCallback(() => {
+    setLightbox(prev => {
+      if (!prev || !prev.imgs || prev.imgs.length <= 1) return prev
+      const nextIdx = (prev.index - 1 + prev.imgs.length) % prev.imgs.length
+      return { ...prev, index: nextIdx, img: prev.imgs[nextIdx] }
+    })
+  }, [])
+
+  const handleNextLightbox = useCallback(() => {
+    setLightbox(prev => {
+      if (!prev || !prev.imgs || prev.imgs.length <= 1) return prev
+      const nextIdx = (prev.index + 1) % prev.imgs.length
+      return { ...prev, index: nextIdx, img: prev.imgs[nextIdx] }
+    })
+  }, [])
+
   const goTo = useCallback((n, dir = 1) => {
     n = Math.max(0, Math.min(N - 1, n))
     const now = performance.now()
     if (n === curRef.current || now < lockUntil.current) return
-    // Snappy, silky 380ms transition lock for fast scrolling
-    lockUntil.current = now + 380
+    // Lock window swallows momentum and guarantees single deliberate slide advance
+    lockUntil.current = now + 480
     setDirection(dir)
     curRef.current = n
     setCur(n)
@@ -896,36 +1820,72 @@ export default function App() {
   useEffect(() => {
     let tx = 0, ty = 0
     let accumulatedDelta = 0
+    let decayTimer = null
 
     const wheel = e => {
-      if (performance.now() < lockUntil.current) return
-      accumulatedDelta += e.deltaY
-      if (Math.abs(accumulatedDelta) > 12 || Math.abs(e.deltaY) > 10) {
-        const sign = Math.sign(accumulatedDelta || e.deltaY)
+      if (lightboxRef.current) return
+      // Discard inertia events while slide transition is in flight
+      if (performance.now() < lockUntil.current) {
         accumulatedDelta = 0
+        return
+      }
+
+      accumulatedDelta += e.deltaY
+
+      clearTimeout(decayTimer)
+      decayTimer = setTimeout(() => {
+        accumulatedDelta = 0
+      }, 160)
+
+      // Solid threshold (45) prevents accidental micro-jitters & trackpad finger drift
+      if (Math.abs(accumulatedDelta) > 45) {
+        const sign = Math.sign(accumulatedDelta)
+        accumulatedDelta = 0
+        clearTimeout(decayTimer)
         goTo(curRef.current + sign, sign)
       }
     }
 
     const ts = e => {
+      if (lightboxRef.current) return
       tx = e.touches[0].clientX
       ty = e.touches[0].clientY
     }
 
     const te = e => {
+      if (lightboxRef.current) return
       if (performance.now() < lockUntil.current) return
       const dx = tx - e.changedTouches[0].clientX
       const dy = ty - e.changedTouches[0].clientY
-      if (Math.abs(dy) > 25 && Math.abs(dy) > Math.abs(dx)) {
+      if (Math.abs(dy) > 35 && Math.abs(dy) > Math.abs(dx) * 1.1) {
         const sign = Math.sign(dy)
         goTo(curRef.current + sign, sign)
-      } else if (Math.abs(dx) > 25) {
+      } else if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.1) {
         const sign = Math.sign(dx)
         goTo(curRef.current + sign, sign)
       }
     }
 
     const kd = e => {
+      if (lightboxRef.current) {
+        if (e.key === 'Escape') {
+          e.preventDefault()
+          setLightbox(null)
+          return
+        }
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault()
+          handlePrevLightbox()
+          return
+        }
+        if (e.key === 'ArrowRight') {
+          e.preventDefault()
+          handleNextLightbox()
+          return
+        }
+        return
+      }
+
       if ([' ', 'ArrowDown', 'ArrowRight', 'PageDown'].includes(e.key)) {
         e.preventDefault()
         goTo(curRef.current + 1, 1)
@@ -941,12 +1901,13 @@ export default function App() {
     window.addEventListener('touchend', te, { passive: true })
     window.addEventListener('keydown', kd)
     return () => {
+      clearTimeout(decayTimer)
       window.removeEventListener('wheel', wheel)
       window.removeEventListener('touchstart', ts)
       window.removeEventListener('touchend', te)
       window.removeEventListener('keydown', kd)
     }
-  }, [goTo])
+  }, [goTo, handleNextLightbox, handlePrevLightbox])
 
   const onFind = (id, msg) => {
     setFound(f => {
@@ -962,7 +1923,7 @@ export default function App() {
     <>
       <ProgressBar value={(cur + 1) / N} />
 
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {!opened ? (
           <LandingPage key="landing" onOpen={() => setOpened(true)} />
         ) : (
@@ -977,6 +1938,7 @@ export default function App() {
               goTo(0, -1)
             }}
             muted={muted}
+            onOpenLightbox={handleOpenLightbox}
           />
         )}
       </AnimatePresence>
@@ -990,6 +1952,17 @@ export default function App() {
 
       <AnimatePresence>
         {toast && <Toast key="toast" message={toast} />}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {lightbox && (
+          <Lightbox
+            data={lightbox}
+            onClose={handleCloseLightbox}
+            onPrev={handlePrevLightbox}
+            onNext={handleNextLightbox}
+          />
+        )}
       </AnimatePresence>
     </>
   )

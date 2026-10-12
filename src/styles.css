@@ -99,12 +99,18 @@ button {
   }
 }
 
-/* Mobile: compact photo; tighter heading so it never clips */
+/* Mobile: generous photo width; tighter heading so it never clips */
+.photo-side {
+  overflow: visible !important;
+}
+.photo-side > div {
+  overflow: visible !important;
+}
 @media (max-width: 859px) {
-  .photo-side > div { width: min(100%, 260px) !important; }
+  .photo-side > div { width: min(94vw, 360px) !important; max-width: 100% !important; overflow: visible !important; }
   h2 {
     /* Cap at 1.9rem on narrow screens — enough to be readable without overflowing */
-    font-size: clamp(1.3rem, 6vw, 1.9rem) !important;
+    font-size: clamp(1.25rem, 5.5vw, 1.85rem) !important;
   }
   .grid-main { gap: 12px !important; }
 }
