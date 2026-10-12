@@ -3,8 +3,8 @@ export const chapters = [
     id: 'rose', n: '01',
     title: 'Today is all about the most beautiful person in my life\u2026',
     quotes: [
-      '\u201cYou are every reason, every hope, and every dream I\u2019ve ever had.\u201d',
-      '\u201cIn a sea of people, my eyes will always search for you.\u201d',
+      'I never disrespected ur efforts, or atleast that was not my intention, but u felt i did please forgive me ,and hope i never repeated that mistake ',
+      '\u201cIn a sea of people, my eyes will always searched for you.\u201d',
     ],
     imgs: ['rose-1','rose-2','rose-3'],
     hint: true,
@@ -21,8 +21,8 @@ export const chapters = [
     id: 'sunflower', n: '02',
     title: 'Thank you for filling my days with smiles, love, and countless little memories.',
     quotes: [
-      '\u201cYou turn ordinary moments into something I\u2019ll treasure forever.\u201d',
-      '\u201cEvery day with you feels like golden hour.\u201d',
+      '\u201cThere are many moments  I\u2019ll treasure and cherish forever.\u201d',
+      '\u201cEven in hard times I always loved You .\u201d',
     ],
     imgs: ['sunflower-1','sunflower-2'],
     egg: { e:'🧁', pos:{ right:'3%', top:'28%' }, msg:'Found a secret 🧁' },
@@ -36,10 +36,10 @@ export const chapters = [
   },
   {
     id: 'waterlily', n: '03',
-    title: 'Every moment with you is a memory I\u2019d choose to live again and again.',
+    title: 'I wish I could live those beautiful moments again and again.',
     quotes: [
-      '\u201cStill waters, soft light, and the thought of you.\u201d',
-      '\u201cWith you, even silence feels like home.\u201d',
+      '\u201cI have always cared for you .If u felt i have not I am really sorry for my actions\u201d',
+      '\u201cLive your life to the fullest pa.\u201d',
     ],
     imgs: ['lily-1','lily-2','lily-3','lily-4'],
     egg: { e:'✦', pos:{ left:'46%', top:'4%' }, msg:'Found a secret ✦' },
@@ -55,8 +55,8 @@ export const chapters = [
     id: 'lotus', n: '04',
     title: 'Your smile makes everything better.',
     quotes: [
-      '\u201cPeace looks a lot like your laugh.\u201d',
-      '\u201cYou bloom beautifully in every season of life.\u201d',
+      '\u201cVery few things make me happy in life, your laugh is one of them.And your laugh truely made me happy\u201d',
+      '\u201cAlways be happy, that is what i wish for you.\u201d',
     ],
     imgs: ['lotus-1','lotus-2'],
     egg: { e:'🍰', pos:{ left:'5%', top:'7%' }, msg:'Found a secret 🍰' },
@@ -72,13 +72,14 @@ export const chapters = [
   {
     id: 'pink', n: '05',
     title: 'You\u2019re truly one of a kind.',
-    title2: 'Happy Birthday, Gundu',
+    title2: 'Happy Birthday, chinnamma',
     quotes: [
-      '\u201cMay every wish you make find its way home.\u201d',
+      '\u201cMay every wish you make come true.\u201d',
       '\u201cHere\u2019s to you \u2014 the most wonderful person I know.\u201d',
     ],
     imgs: ['pink-1'],
     last: true,
+    message: 'Many more happy returns of the day pa.',
     palette: {
       bg: { d:'/bg/pink-d.jpg', m:'/bg/pink-m.jpg' },
       accent: '#ff8fd2',
