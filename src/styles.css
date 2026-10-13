@@ -107,7 +107,7 @@ button {
   overflow: visible !important;
 }
 @media (max-width: 859px) {
-  .photo-side > div { width: min(94vw, 360px) !important; max-width: 100% !important; overflow: visible !important; }
+  .photo-side > div { width: min(94vw, 440px) !important; max-width: 100% !important; overflow: visible !important; }
   h2 {
     /* Cap at 1.9rem on narrow screens — enough to be readable without overflowing */
     font-size: clamp(1.25rem, 5.5vw, 1.85rem) !important;

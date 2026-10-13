@@ -196,6 +196,7 @@ function PhotoFrame({
   my,
   depth = 12,
   objectPosition = 'center 38%',
+  objectFit = 'cover',
   onExpand,
   style = {},
 }) {
@@ -263,7 +264,7 @@ function PhotoFrame({
         style={{
           position: 'relative',
           width: '100%', height: '100%',
-          objectFit: 'cover',
+          objectFit: objectFit,
           objectPosition: objectPosition,
           display: 'block',
         }}
@@ -764,36 +765,35 @@ function Collage({ imgs, mx, my, onOpenLightbox }) {
   }
 
   if (n === 3) {
-    // 3 Photos (Rose):
-    // Organic romantic scrapbook layout – no rigid uniform rectangles!
-    // Card 1 (rose-1): Hero portrait card, gently tilted (-3.2°), layered on left
-    // Card 2 (rose-2): Radiant smile card, tilted (+3.8°), overlapping on right
-    // Card 3 (rose-3): Graceful traditional portrait, tilted (-1.4°), anchored at center-bottom
+    // 3 Photos (Rose Chapter):
+    // Spacious, uncrowded layout with natural aspect ratios:
+    // Top Hero: rose-1 in wide 16:9.8 format (natural unzoomed portrait, entire face, earring & mehndi visible)
+    // Bottom Duo: rose-2 & rose-3 side-by-side with clear visibility, breathing room & gentle romantic tilts
     return (
       <div
         style={{
           position: 'relative',
-          width: 'min(94vw, 470px)',
-          aspectRatio: '1.05 / 1',
+          width: 'min(94vw, 490px)',
           margin: '0 auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 'clamp(10px, 2.2svh, 16px)',
           overflow: 'visible',
         }}
       >
-        {/* Card 1: rose-1 (Hero card, intimate portrait) */}
+        {/* Top Hero Card: rose-1 (Wide landscape, unzoomed, full expression & mehndi visible) */}
         <motion.div
           onMouseEnter={() => setHoveredIdx(0)}
           onMouseLeave={() => setHoveredIdx(null)}
-          initial={{ rotate: -3.2 }}
-          whileHover={{ scale: 1.06, rotate: 0, y: -6, zIndex: 14 }}
+          initial={{ rotate: -1.2 }}
+          whileHover={{ scale: 1.03, rotate: 0, y: -4, zIndex: 12 }}
           transition={{ duration: 0.25, ease: E }}
           style={{
-            position: 'absolute',
-            left: '2%',
-            top: '2%',
-            width: '56%',
-            height: '74%',
-            zIndex: hoveredIdx === 0 ? 14 : 3,
+            position: 'relative',
+            width: '100%',
+            aspectRatio: '16 / 9.8',
             transformOrigin: 'center center',
+            zIndex: hoveredIdx === 0 ? 12 : 2,
           }}
         >
           <PhotoFrame
@@ -801,67 +801,74 @@ function Collage({ imgs, mx, my, onOpenLightbox }) {
             delay={0.06}
             mx={mx}
             my={my}
-            depth={12}
-            objectPosition="center 36%"
+            depth={8}
+            objectPosition="center 42%"
             onExpand={() => onOpenLightbox?.(imgs[0], 0)}
           />
         </motion.div>
 
-        {/* Card 2: rose-2 (Radiant smile card) */}
-        <motion.div
-          onMouseEnter={() => setHoveredIdx(1)}
-          onMouseLeave={() => setHoveredIdx(null)}
-          initial={{ rotate: 3.8 }}
-          whileHover={{ scale: 1.06, rotate: 0, y: -6, zIndex: 14 }}
-          transition={{ duration: 0.25, ease: E }}
+        {/* Bottom Duo Row: rose-2 and rose-3 side-by-side (uncrowded, zero obstruction) */}
+        <div
           style={{
-            position: 'absolute',
-            right: '2%',
-            top: '8%',
-            width: '54%',
-            height: '72%',
-            zIndex: hoveredIdx === 1 ? 14 : 2,
-            transformOrigin: 'center center',
+            display: 'flex',
+            width: '100%',
+            gap: 'clamp(10px, 2.5vw, 16px)',
+            justifyContent: 'space-between',
+            position: 'relative',
           }}
         >
-          <PhotoFrame
-            name={imgs[1]}
-            delay={0.12}
-            mx={mx}
-            my={my}
-            depth={14}
-            objectPosition="center center"
-            onExpand={() => onOpenLightbox?.(imgs[1], 1)}
-          />
-        </motion.div>
+          {/* Bottom Left: rose-2 (Radiant smile card) */}
+          <motion.div
+            onMouseEnter={() => setHoveredIdx(1)}
+            onMouseLeave={() => setHoveredIdx(null)}
+            initial={{ rotate: -2.2 }}
+            whileHover={{ scale: 1.05, rotate: 0, y: -5, zIndex: 12 }}
+            transition={{ duration: 0.25, ease: E }}
+            style={{
+              flex: 1,
+              aspectRatio: '3 / 3.9',
+              position: 'relative',
+              transformOrigin: 'center center',
+              zIndex: hoveredIdx === 1 ? 12 : 2,
+            }}
+          >
+            <PhotoFrame
+              name={imgs[1]}
+              delay={0.12}
+              mx={mx}
+              my={my}
+              depth={10}
+              objectPosition="center 30%"
+              onExpand={() => onOpenLightbox?.(imgs[1], 1)}
+            />
+          </motion.div>
 
-        {/* Card 3: rose-3 (Traditional outfit card, centered lower anchor) */}
-        <motion.div
-          onMouseEnter={() => setHoveredIdx(2)}
-          onMouseLeave={() => setHoveredIdx(null)}
-          initial={{ rotate: -1.4 }}
-          whileHover={{ scale: 1.06, rotate: 0, y: -6, zIndex: 14 }}
-          transition={{ duration: 0.25, ease: E }}
-          style={{
-            position: 'absolute',
-            left: '24%',
-            bottom: '2%',
-            width: '54%',
-            height: '66%',
-            zIndex: hoveredIdx === 2 ? 14 : 4,
-            transformOrigin: 'center center',
-          }}
-        >
-          <PhotoFrame
-            name={imgs[2]}
-            delay={0.18}
-            mx={mx}
-            my={my}
-            depth={14}
-            objectPosition="center 20%"
-            onExpand={() => onOpenLightbox?.(imgs[2], 2)}
-          />
-        </motion.div>
+          {/* Bottom Right: rose-3 (Graceful traditional portrait) */}
+          <motion.div
+            onMouseEnter={() => setHoveredIdx(2)}
+            onMouseLeave={() => setHoveredIdx(null)}
+            initial={{ rotate: 2.2 }}
+            whileHover={{ scale: 1.05, rotate: 0, y: -5, zIndex: 12 }}
+            transition={{ duration: 0.25, ease: E }}
+            style={{
+              flex: 1,
+              aspectRatio: '3 / 3.9',
+              position: 'relative',
+              transformOrigin: 'center center',
+              zIndex: hoveredIdx === 2 ? 12 : 2,
+            }}
+          >
+            <PhotoFrame
+              name={imgs[2]}
+              delay={0.18}
+              mx={mx}
+              my={my}
+              depth={10}
+              objectPosition="center 20%"
+              onExpand={() => onOpenLightbox?.(imgs[2], 2)}
+            />
+          </motion.div>
+        </div>
 
         {/* Romantic backlight glow */}
         <motion.div
@@ -871,9 +878,9 @@ function Collage({ imgs, mx, my, onOpenLightbox }) {
           style={{
             position: 'absolute', left: '50%', top: '50%',
             transform: 'translate(-50%,-50%)',
-            width: 'clamp(60px, 14vw, 90px)', height: 'clamp(60px, 14vw, 90px)',
+            width: 'clamp(100px, 25vw, 180px)', height: 'clamp(100px, 25vw, 180px)',
             borderRadius: '50%', background: accent,
-            filter: 'blur(32px)', zIndex: 0, pointerEvents: 'none',
+            filter: 'blur(45px)', zIndex: 0, pointerEvents: 'none',
           }}
         />
       </div>
@@ -1139,7 +1146,7 @@ function ConfettiBurst({ onDone, accent }) {
 }
 
 /* ─── Landing Page – Card Opening Experience with All Original Text ─── */
-function LandingPage({ onOpen }) {
+function LandingPage({ onOpen, onOpenImmediate }) {
   const r = useReducedMotion()
   const [isOpening, setIsOpening] = useState(false)
   const [showBurst, setShowBurst] = useState(false)
@@ -1151,6 +1158,7 @@ function LandingPage({ onOpen }) {
     setIsOpening(true)
     setShowBurst(true)
     playSparkleSound(false)
+    onOpenImmediate?.()
     // Smooth, celebratory 3D card unfold into flower pages
     setTimeout(() => { onOpen() }, 420)
   }
@@ -1207,7 +1215,7 @@ function LandingPage({ onOpen }) {
         onClick={handleOpen}
         role="button"
         tabIndex={0}
-        aria-label="Open your birthday card"
+        aria-label="Open Card"
         onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && handleOpen()}
         style={{
           position: 'relative',
@@ -1366,10 +1374,10 @@ function LandingPage({ onOpen }) {
                 position: 'relative', overflow: 'hidden',
                 opacity: isOpening ? 0.8 : 1,
               }}
-              aria-label="Open your birthday card"
+              aria-label="Open Card"
             >
               <span style={{ position: 'relative', zIndex: 1 }}>
-                {isOpening ? 'Opening Card… ✨' : 'Open Your Card ✨'}
+                {isOpening ? 'Opening…' : 'Open Card'}
               </span>
               {!isOpening && (
                 <motion.div aria-hidden="true"
@@ -1869,7 +1877,7 @@ export default function App() {
   const lockUntil = useRef(0)
   const curRef = useRef(0)
   const tt = useRef()
-  const { fadeOutCurrent, resumeAudio } = useAudio(cur, muted)
+  const { fadeOutCurrent, resumeAudio, startAudio } = useAudio(cur, muted, opened)
 
   // ── Auto-scroll state: 40s timer per page if user doesn't scroll ──
   const [lastUserAction, setLastUserAction] = useState(0)
@@ -2081,6 +2089,9 @@ export default function App() {
         {!opened ? (
           <LandingPage
             key="landing"
+            onOpenImmediate={() => {
+              startAudio(0)
+            }}
             onOpen={() => {
               resumeAudio()
               setOpened(true)

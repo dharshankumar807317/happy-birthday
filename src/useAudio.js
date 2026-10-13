@@ -10,7 +10,7 @@ const TRACKS = [
 const FADE = 1.6   // seconds to cross-fade
 const VOL  = 0.72  // comfortable listening volume
 
-export function useAudio(idx, muted) {
+export function useAudio(idx, muted, enabled = false) {
   const nodes = useRef([])   // { el, gain } per track
   const ctx   = useRef(null)
   const isFadingOut = useRef(false)
@@ -46,10 +46,30 @@ export function useAudio(idx, muted) {
     }
   }, [init])
 
+  // Explicit start of a track immediately on user interaction gesture
+  const startAudio = useCallback((trackIdx = 0) => {
+    const AC = init()
+    if (AC && AC.state === 'suspended') {
+      AC.resume().catch(() => {})
+    }
+    const target = nodes.current[trackIdx]
+    if (target && target.el) {
+      target.el.currentTime = 0
+      target.el.play().catch(e => console.warn('Audio play error:', e))
+      if (target.gain && !muted) {
+        const now = AC ? AC.currentTime : 0
+        const g = target.gain.gain
+        g.cancelScheduledValues(now)
+        g.setValueAtTime(0, now)
+        g.linearRampToValueAtTime(VOL, now + FADE)
+      }
+    }
+  }, [init, muted])
+
   // Fade out the current track smoothly before an automated page scroll
   const fadeOutCurrent = useCallback((duration = 2.0) => {
     const AC = ctx.current
-    if (!AC || muted) return
+    if (!AC || muted || !enabled) return
     isFadingOut.current = true
     const now = AC.currentTime
     const curr = nodes.current[idx]
@@ -63,10 +83,25 @@ export function useAudio(idx, muted) {
         isFadingOut.current = false
       }, duration * 1000)
     }
-  }, [idx, muted])
+  }, [idx, muted, enabled])
 
-  // Manage playback and smooth cross-fades when idx or muted changes
+  // Manage playback and smooth cross-fades when idx, muted, or enabled changes
   useEffect(() => {
+    if (!enabled) {
+      // While card is closed, keep all tracks paused & quiet
+      const AC = ctx.current
+      if (AC) {
+        nodes.current.forEach(({ el, gain }) => {
+          if (gain) {
+            gain.gain.cancelScheduledValues(AC.currentTime)
+            gain.gain.setValueAtTime(0, AC.currentTime)
+          }
+          el.pause()
+        })
+      }
+      return
+    }
+
     if (muted) {
       // Smooth fade-out on mute
       const AC = ctx.current
@@ -120,11 +155,11 @@ export function useAudio(idx, muted) {
         }, (FADE + 0.3) * 1000)
       }
     })
-  }, [idx, muted, init])
+  }, [idx, muted, enabled, init])
 
-  // Global listener for first user interaction to unlock suspended AudioContext
+  // Global listener for first user interaction to unlock suspended AudioContext (ONLY after opened)
   useEffect(() => {
-    if (muted) return
+    if (!enabled || muted) return
     const unlock = () => {
       resumeAudio()
       window.removeEventListener('pointerdown', unlock)
@@ -139,7 +174,7 @@ export function useAudio(idx, muted) {
       window.removeEventListener('touchstart', unlock)
       window.removeEventListener('click', unlock)
     }
-  }, [muted, resumeAudio])
+  }, [enabled, muted, resumeAudio])
 
-  return { fadeOutCurrent, resumeAudio }
+  return { fadeOutCurrent, resumeAudio, startAudio }
 }
