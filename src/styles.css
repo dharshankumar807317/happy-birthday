@@ -120,13 +120,11 @@ button {
   h2 { font-size: clamp(1.15rem, 5.5vw, 1.6rem) !important; }
 }
 
-/* Very short screens (e.g. landscape phone) – hide photo to give text room */
+/* Very short screens (e.g. landscape phone) – scale gracefully */
 @media (max-height: 560px) {
   .grid-main {
-    grid-template-areas: "copy" !important;
-    grid-template-columns: 1fr !important;
+    gap: 8px !important;
   }
-  .photo-side { display: none !important; }
 }
 
 /* ─── Landscape phone safe-area padding ─────────────────────────── */

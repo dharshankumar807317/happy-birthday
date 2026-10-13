@@ -592,8 +592,8 @@ export default function ThreeCake({ onWish, accent = '#ff8fd2', muted = false })
         ref={mountRef}
         onClick={handleCeremonyClick}
         style={{
-          width: 'min(380px, 86vw)',
-          height: 'min(335px, 46svh)',
+          width: 'min(360px, 88vw)',
+          height: 'clamp(180px, 28svh, 290px)',
           position: 'relative',
           cursor: 'grab',
           filter: phase === 1 ? 'drop-shadow(0 12px 30px rgba(255,160,50,0.35))' : 'drop-shadow(0 14px 28px rgba(0,0,0,0.5))',

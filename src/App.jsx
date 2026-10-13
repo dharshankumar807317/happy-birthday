@@ -82,6 +82,74 @@ function QuotePill({ text, delay = 0.15, style, floatDuration = 4.5 }) {
   )
 }
 
+/* ─── BirthdayWishPill (Auto-cycling, interactive wish pills for Finale) ── */
+function BirthdayWishPill({ quotes = [] }) {
+  const [activeIdx, setActiveIdx] = useState(0)
+
+  useEffect(() => {
+    if (!quotes || !quotes.length) return
+    const timer = setInterval(() => {
+      setActiveIdx(prev => (prev + 1) % quotes.length)
+    }, 4500)
+    return () => clearInterval(timer)
+  }, [quotes])
+
+  if (!quotes || !quotes.length) return null
+
+  return (
+    <div
+      onClick={() => setActiveIdx(prev => (prev + 1) % quotes.length)}
+      style={{
+        margin: '0.35rem auto 0.6rem',
+        cursor: 'pointer',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        userSelect: 'none',
+        position: 'relative',
+        zIndex: 10,
+      }}
+      title="Tap to see next wish 💖"
+    >
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeIdx}
+          initial={{ opacity: 0, y: 6, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -6, scale: 0.96 }}
+          transition={{ duration: 0.35, ease: E }}
+          whileHover={{ scale: 1.04 }}
+          whileTap={{ scale: 0.96 }}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '0.4rem 1.1rem',
+            borderRadius: 999,
+            background: 'rgba(15, 3, 20, 0.72)',
+            backdropFilter: 'blur(18px)',
+            WebkitBackdropFilter: 'blur(18px)',
+            border: '1px solid rgba(255, 143, 210, 0.45)',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.45), 0 0 20px rgba(255,143,210,0.3)',
+            fontFamily: "'Nunito', sans-serif",
+            fontStyle: 'italic',
+            fontWeight: 600,
+            fontSize: 'clamp(0.74rem, 2.3vw, 0.88rem)',
+            color: '#fff',
+            maxWidth: 'min(92vw, 420px)',
+            textAlign: 'center',
+            lineHeight: 1.35,
+          }}
+        >
+          <span style={{ fontSize: '0.9rem', color: '#ff8fd2' }}>✨</span>
+          <span>{quotes[activeIdx]}</span>
+          <span style={{ fontSize: '0.9rem', color: '#ff8fd2' }}>✨</span>
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  )
+}
+
 /* ─── Words – Unified Swift Reveal ─────────────────────────────── */
 function Words({ text, delay = 0, accent }) {
   const r = useReducedMotion()
@@ -697,32 +765,34 @@ function Collage({ imgs, mx, my, onOpenLightbox }) {
 
   if (n === 3) {
     // 3 Photos (Rose):
-    // Top hero: rose-1 (curved, unlabelled, face & henna & saree clearly visible, tilted -2°)
-    // Bottom: rose-2 & rose-3 overlapping rose-1 vertically and each other horizontally
+    // Organic romantic scrapbook layout – no rigid uniform rectangles!
+    // Card 1 (rose-1): Hero portrait card, gently tilted (-3.2°), layered on left
+    // Card 2 (rose-2): Radiant smile card, tilted (+3.8°), overlapping on right
+    // Card 3 (rose-3): Graceful traditional portrait, tilted (-1.4°), anchored at center-bottom
     return (
       <div
         style={{
           position: 'relative',
-          width: 'min(96vw, 510px)',
-          aspectRatio: '1 / 1.06',
+          width: 'min(94vw, 470px)',
+          aspectRatio: '1.05 / 1',
           margin: '0 auto',
           overflow: 'visible',
         }}
       >
-        {/* Top: Landscape Hero Card (rose-1) */}
+        {/* Card 1: rose-1 (Hero card, intimate portrait) */}
         <motion.div
           onMouseEnter={() => setHoveredIdx(0)}
           onMouseLeave={() => setHoveredIdx(null)}
-          initial={{ rotate: -2.0 }}
-          whileHover={{ scale: 1.04, rotate: 0, y: -6, zIndex: 12 }}
+          initial={{ rotate: -3.2 }}
+          whileHover={{ scale: 1.06, rotate: 0, y: -6, zIndex: 14 }}
           transition={{ duration: 0.25, ease: E }}
           style={{
             position: 'absolute',
             left: '2%',
             top: '2%',
-            width: '96%',
-            height: '54%',
-            zIndex: hoveredIdx === 0 ? 12 : 2,
+            width: '56%',
+            height: '74%',
+            zIndex: hoveredIdx === 0 ? 14 : 3,
             transformOrigin: 'center center',
           }}
         >
@@ -731,26 +801,26 @@ function Collage({ imgs, mx, my, onOpenLightbox }) {
             delay={0.06}
             mx={mx}
             my={my}
-            depth={10}
-            objectPosition="center 38%"
+            depth={12}
+            objectPosition="center 36%"
             onExpand={() => onOpenLightbox?.(imgs[0], 0)}
           />
         </motion.div>
 
-        {/* Bottom Left: Portrait Card (rose-2 - pizza smile) */}
+        {/* Card 2: rose-2 (Radiant smile card) */}
         <motion.div
           onMouseEnter={() => setHoveredIdx(1)}
           onMouseLeave={() => setHoveredIdx(null)}
-          initial={{ rotate: 2.6 }}
-          whileHover={{ scale: 1.05, rotate: 0, y: -6, zIndex: 12 }}
+          initial={{ rotate: 3.8 }}
+          whileHover={{ scale: 1.06, rotate: 0, y: -6, zIndex: 14 }}
           transition={{ duration: 0.25, ease: E }}
           style={{
             position: 'absolute',
-            left: '2%',
-            bottom: '2%',
-            width: '52%',
-            height: '50%',
-            zIndex: hoveredIdx === 1 ? 12 : 3,
+            right: '2%',
+            top: '8%',
+            width: '54%',
+            height: '72%',
+            zIndex: hoveredIdx === 1 ? 14 : 2,
             transformOrigin: 'center center',
           }}
         >
@@ -765,20 +835,20 @@ function Collage({ imgs, mx, my, onOpenLightbox }) {
           />
         </motion.div>
 
-        {/* Bottom Right: Portrait Card (rose-3 - traditional outfit) */}
+        {/* Card 3: rose-3 (Traditional outfit card, centered lower anchor) */}
         <motion.div
           onMouseEnter={() => setHoveredIdx(2)}
           onMouseLeave={() => setHoveredIdx(null)}
-          initial={{ rotate: -2.4 }}
-          whileHover={{ scale: 1.05, rotate: 0, y: -6, zIndex: 12 }}
+          initial={{ rotate: -1.4 }}
+          whileHover={{ scale: 1.06, rotate: 0, y: -6, zIndex: 14 }}
           transition={{ duration: 0.25, ease: E }}
           style={{
             position: 'absolute',
-            right: '2%',
+            left: '24%',
             bottom: '2%',
-            width: '52%',
-            height: '50%',
-            zIndex: hoveredIdx === 2 ? 12 : 4,
+            width: '54%',
+            height: '66%',
+            zIndex: hoveredIdx === 2 ? 14 : 4,
             transformOrigin: 'center center',
           }}
         >
@@ -788,21 +858,22 @@ function Collage({ imgs, mx, my, onOpenLightbox }) {
             mx={mx}
             my={my}
             depth={14}
-            objectPosition="center 22%"
+            objectPosition="center 20%"
             onExpand={() => onOpenLightbox?.(imgs[2], 2)}
           />
         </motion.div>
 
+        {/* Romantic backlight glow */}
         <motion.div
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 0.28 }}
           transition={{ delay: 0.12, duration: 0.4, ease: E }}
           style={{
-            position: 'absolute', left: '50%', bottom: '22%',
-            transform: 'translate(-50%,0)',
-            width: 'clamp(50px, 12vw, 80px)', height: 'clamp(50px, 12vw, 80px)',
+            position: 'absolute', left: '50%', top: '50%',
+            transform: 'translate(-50%,-50%)',
+            width: 'clamp(60px, 14vw, 90px)', height: 'clamp(60px, 14vw, 90px)',
             borderRadius: '50%', background: accent,
-            filter: 'blur(30px)', zIndex: 0, pointerEvents: 'none',
+            filter: 'blur(32px)', zIndex: 0, pointerEvents: 'none',
           }}
         />
       </div>
@@ -1327,7 +1398,7 @@ function LandingPage({ onOpen }) {
 }
 
 /* ─── Grand Finale Slide (Slide 05 - Flower & Cake Finale) ───────── */
-function FinaleSlide({ c, onFind, onReplay, muted, smx, smy, direction = 1 }) {
+function FinaleSlide({ c, onFind, onReplay, muted, smx, smy, direction = 1, onOpenLightbox }) {
   const r = useReducedMotion()
   const mob = useIsMobile()
   const accent = c.palette.accent
@@ -1338,16 +1409,19 @@ function FinaleSlide({ c, onFind, onReplay, muted, smx, smy, direction = 1 }) {
       style={{
         '--ac': accent,
         position: 'fixed', inset: 0,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        display: 'flex', alignItems: mob ? 'flex-start' : 'center', justifyContent: 'center',
         padding: mob
-          ? 'clamp(44px, 6.5svh, 60px) clamp(12px, 3vw, 24px) clamp(44px, 6svh, 56px)'
+          ? 'clamp(46px, 6svh, 60px) clamp(10px, 2.5vw, 18px) clamp(28px, 4svh, 44px)'
           : 'clamp(52px, 8svh, 76px) clamp(20px, 3.5vw, 52px) clamp(40px, 6svh, 64px)',
-        overflow: 'hidden', isolation: 'isolate',
+        overflowY: mob ? 'auto' : 'hidden',
+        WebkitOverflowScrolling: 'touch',
+        scrollbarWidth: 'none',
+        isolation: 'isolate',
       }}
-      initial={{ opacity: 0, y: direction * 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -direction * 15 }}
-      transition={{ duration: r ? 0 : 0.22, ease: [0.25, 1, 0.5, 1] }}
+      initial={{ opacity: 0, y: direction * 45, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -direction * 45, scale: 0.98 }}
+      transition={{ duration: r ? 0 : 0.65, ease: [0.22, 1, 0.36, 1] }}
     >
       {/* Background layers - stationary and calm */}
       <div aria-hidden="true" style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
@@ -1363,39 +1437,39 @@ function FinaleSlide({ c, onFind, onReplay, muted, smx, smy, direction = 1 }) {
 
       <Particles palette={c.palette} count={c.palette.count} mode={c.palette.mode} active />
 
-      {/* Floating Quotes placed safely around the scene */}
-      <QuotePill
-        text={c.quotes[0]}
-        delay={0.12}
-        floatDuration={4.4}
-        style={{
-          top: mob ? 'max(8px, env(safe-area-inset-top, 0px))' : 'clamp(60px, 8.5svh, 86px)',
-          left: mob ? '10px' : 'clamp(12px, 3vw, 38px)',
-          maxWidth: mob ? 'min(46vw, 175px)' : 'min(38vw, 310px)',
-          fontSize: mob ? '.68rem' : undefined,
-          padding: mob ? '.25rem .6rem' : undefined,
-        }}
-      />
-      <QuotePill
-        text={c.quotes[2] || '“keep smiling kandha 😊😊”'}
-        delay={0.20}
-        floatDuration={5.2}
-        style={{
-          top: mob ? 'max(8px, env(safe-area-inset-top, 0px))' : 'clamp(60px, 8.5svh, 86px)',
-          right: mob ? '10px' : 'clamp(12px, 3vw, 38px)',
-          maxWidth: mob ? 'min(46vw, 175px)' : 'min(38vw, 310px)',
-          fontSize: mob ? '.68rem' : undefined,
-          padding: mob ? '.25rem .6rem' : undefined,
-        }}
-      />
-      {!mob && (
+      {/* Floating Quotes placed safely around the scene on desktop */}
+      {!mob && c.quotes?.[0] && (
+        <QuotePill
+          text={c.quotes[0]}
+          delay={0.12}
+          floatDuration={4.4}
+          style={{
+            top: 'clamp(60px, 8.5svh, 86px)',
+            left: 'clamp(14px, 3.5vw, 42px)',
+            maxWidth: 'min(38vw, 310px)',
+          }}
+        />
+      )}
+      {!mob && (c.quotes?.[2] || '“keep smiling kandha 😊😊”') && (
+        <QuotePill
+          text={c.quotes[2] || '“keep smiling kandha 😊😊”'}
+          delay={0.20}
+          floatDuration={5.2}
+          style={{
+            top: 'clamp(60px, 8.5svh, 86px)',
+            right: 'clamp(14px, 3.5vw, 42px)',
+            maxWidth: 'min(38vw, 310px)',
+          }}
+        />
+      )}
+      {!mob && c.quotes?.[1] && (
         <QuotePill
           text={c.quotes[1]}
           delay={0.28}
           floatDuration={4.8}
           style={{
             bottom: 'clamp(50px, 7.5svh, 74px)',
-            right: 'clamp(12px, 3vw, 38px)',
+            right: 'clamp(14px, 3.5vw, 42px)',
             maxWidth: 'min(42vw, 320px)',
           }}
         />
@@ -1412,20 +1486,21 @@ function FinaleSlide({ c, onFind, onReplay, muted, smx, smy, direction = 1 }) {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 'clamp(0.2rem, 1svh, 0.55rem)',
+          gap: 'clamp(0.15rem, 0.8svh, 0.45rem)',
           textAlign: 'center',
+          margin: mob ? '0 auto' : undefined,
         }}
       >
-        {/* Clean, Elegant Birthday Headline */}
+        {/* Clean, Elegant Birthday Headline – 100% visible, unobstructed */}
         <h2
           style={{
             fontFamily: "'Pacifico', cursive",
             fontWeight: 400,
-            fontSize: mob ? 'clamp(1.35rem, 4.2vw, 1.85rem)' : 'clamp(1.55rem, 3.8vw, 2.5rem)',
+            fontSize: mob ? 'clamp(1.25rem, 4.6vw, 1.8rem)' : 'clamp(1.55rem, 3.8vw, 2.5rem)',
             lineHeight: 1.25,
             textWrap: 'balance',
             textShadow: '0 2px 28px rgba(0,0,0,.85), 0 0 35px var(--ac)',
-            margin: 0,
+            margin: '0 auto',
             color: 'var(--ac)',
           }}
         >
@@ -1438,16 +1513,21 @@ function FinaleSlide({ c, onFind, onReplay, muted, smx, smy, direction = 1 }) {
             style={{
               fontFamily: "'Nunito', sans-serif",
               fontWeight: 600,
-              fontSize: mob ? 'clamp(0.82rem, 2.1vw, 0.95rem)' : 'clamp(0.88rem, 2vw, 1.08rem)',
+              fontSize: mob ? 'clamp(0.80rem, 2.2vw, 0.95rem)' : 'clamp(0.88rem, 2vw, 1.08rem)',
               lineHeight: 1.4,
               color: 'rgba(255,248,246,0.92)',
               textShadow: '0 2px 18px rgba(0,0,0,0.8)',
               maxWidth: '46ch',
-              margin: '0 auto',
+              margin: '0.15rem auto 0',
             }}
           >
             {c.message || 'Many more happy returns of the day pa.'}
           </p>
+        </FadeUp>
+
+        {/* All quotes included in an elegant auto-cycling interactive pill so none are left out */}
+        <FadeUp delay={0.06}>
+          <BirthdayWishPill quotes={c.quotes} />
         </FadeUp>
 
         {/* Showcase Row: Framed Flower Photo + 3D Cake */}
@@ -1457,9 +1537,9 @@ function FinaleSlide({ c, onFind, onReplay, muted, smx, smy, direction = 1 }) {
             flexDirection: mob ? 'column' : 'row',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: mob ? 'clamp(8px, 1.6svh, 16px)' : 'clamp(28px, 4.5vw, 60px)',
+            gap: mob ? 'clamp(4px, 1.2svh, 12px)' : 'clamp(28px, 4.5vw, 60px)',
             width: '100%',
-            marginTop: 'clamp(2px, 0.6svh, 8px)',
+            marginTop: 'clamp(2px, 0.4svh, 6px)',
           }}
         >
           {/* Authentic Blooming Flower Photo Frame on the Last Page */}
@@ -1467,7 +1547,7 @@ function FinaleSlide({ c, onFind, onReplay, muted, smx, smy, direction = 1 }) {
             <div
               style={{
                 position: 'relative',
-                width: mob ? 'min(245px, 62vw)' : 'min(330px, 29vw)',
+                width: mob ? 'min(155px, 42vw)' : 'min(330px, 29vw)',
                 aspectRatio: '1/1',
               }}
             >
@@ -1535,14 +1615,19 @@ function Slide({ c, idx, onFind, onReplay, muted, direction = 1, onOpenLightbox 
       style={{
         '--ac': c.palette.accent,
         position: 'fixed', inset: 0,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: 'clamp(56px,9svh,96px) clamp(18px,4vw,68px) clamp(82px,11svh,108px)',
-        overflow: 'hidden', isolation: 'isolate',
+        display: 'flex', alignItems: mob ? 'flex-start' : 'center', justifyContent: 'center',
+        padding: mob
+          ? 'clamp(46px, 6svh, 60px) clamp(12px, 3vw, 24px) clamp(36px, 5svh, 48px)'
+          : 'clamp(56px,9svh,96px) clamp(18px,4vw,68px) clamp(82px,11svh,108px)',
+        overflowY: mob ? 'auto' : 'hidden',
+        WebkitOverflowScrolling: 'touch',
+        scrollbarWidth: 'none',
+        isolation: 'isolate',
       }}
-      initial={{ opacity: 0, y: direction * 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -direction * 15 }}
-      transition={{ duration: r ? 0 : 0.22, ease: [0.25, 1, 0.5, 1] }}
+      initial={{ opacity: 0, y: direction * 45, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -direction * 45, scale: 0.98 }}
+      transition={{ duration: r ? 0 : 0.65, ease: [0.22, 1, 0.36, 1] }}
     >
       {/* Background - stationary and calm */}
       <div aria-hidden="true" style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
@@ -1558,23 +1643,13 @@ function Slide({ c, idx, onFind, onReplay, muted, direction = 1, onOpenLightbox 
 
       <Particles palette={c.palette} count={c.palette.count} mode={c.palette.mode} active images={c.imgs} />
 
-      {/* Floating quote pills - safely positioned on the copy/text side away from photos */}
-      {c.quotes?.[0] && (
+      {/* Floating quote pills - safely positioned on the copy/text side away from photos on desktop */}
+      {!mob && c.quotes?.[0] && (
         <QuotePill
           text={c.quotes[0]}
           delay={0.12}
           style={
-            mob
-              ? {
-                  top: 'max(8px, env(safe-area-inset-top, 0px))',
-                  left: '50%',
-                  right: 'auto',
-                  transform: 'translateX(-50%)',
-                  maxWidth: 'min(92vw, 360px)',
-                  fontSize: 'clamp(0.68rem, 2.2vw, 0.78rem)',
-                  padding: '0.3rem 0.8rem',
-                }
-              : flip
+            flip
               ? {
                   top: 'max(16px, env(safe-area-inset-top, 0px))',
                   right: 'clamp(20px, 4.5vw, 64px)',
@@ -1629,7 +1704,7 @@ function Slide({ c, idx, onFind, onReplay, muted, direction = 1, onOpenLightbox 
           position: 'relative', zIndex: 2,
           width: '100%', maxWidth: 1160,
           display: 'grid', alignItems: 'center',
-          gap: 'clamp(16px,3.5vw,58px)',
+          gap: 'clamp(14px,3vw,58px)',
           gridTemplateColumns: '1fr',
           gridTemplateAreas: '"copy" "photo"',
           ...(r ? {} : { rotateX: cardRY, rotateY: cardRX }),
@@ -1640,13 +1715,24 @@ function Slide({ c, idx, onFind, onReplay, muted, direction = 1, onOpenLightbox 
       >
         <div style={{ gridArea: 'copy', textAlign: 'center' }} className="copy-side">
           <FadeUp delay={0.02}>
-            <p style={{ fontFamily: "'Nunito', sans-serif", fontWeight: 700, fontSize: '.73rem', letterSpacing: '.26em', color: 'var(--ac)', opacity: 0.88, marginBottom: '.65em' }}>{c.n} / 05</p>
+            <p style={{
+              fontFamily: "'Nunito', sans-serif",
+              fontWeight: 700,
+              fontSize: '.73rem',
+              letterSpacing: '.26em',
+              color: 'var(--ac)',
+              opacity: 0.88,
+              marginBottom: '.5em',
+              paddingTop: mob ? 'clamp(24px, 4svh, 36px)' : 0,
+            }}>
+              {c.n} / 05
+            </p>
           </FadeUp>
           <h2 style={{
             fontFamily: "'Pacifico', cursive",
             fontWeight: 400,
-            fontSize: 'clamp(1.45rem,5vw,3.2rem)',
-            lineHeight: 1.2, textWrap: 'balance',
+            fontSize: mob ? 'clamp(1.2rem, 4.6vw, 1.7rem)' : 'clamp(1.45rem,5vw,3.2rem)',
+            lineHeight: 1.25, textWrap: 'balance',
             textShadow: '0 2px 32px rgba(0,0,0,.82), 0 0 20px rgba(0,0,0,.5)', marginBottom: '.5em',
             letterSpacing: '0.01em',
           }}
@@ -1654,26 +1740,56 @@ function Slide({ c, idx, onFind, onReplay, muted, direction = 1, onOpenLightbox 
             <Words text={c.title} delay={0.04} />
             {c.title2 && <><br /><Words text={c.title2} delay={0.1} accent /></>}
           </h2>
+
+          {/* Heartfelt note/quote rendered in-flow on mobile – prevents overlapping */}
+          {mob && c.quotes?.[0] && (
+            <FadeUp delay={0.06}>
+              <div
+                style={{
+                  margin: '0.45rem auto 0.55rem',
+                  padding: '0.42rem 0.95rem',
+                  maxWidth: 'min(92vw, 360px)',
+                  borderRadius: '16px',
+                  background: 'rgba(8,2,16,0.62)',
+                  backdropFilter: 'blur(16px)',
+                  WebkitBackdropFilter: 'blur(16px)',
+                  border: '1px solid rgba(255,255,255,0.22)',
+                  boxShadow: '0 6px 20px rgba(0,0,0,0.4)',
+                  fontFamily: "'Nunito', sans-serif",
+                  fontStyle: 'italic',
+                  fontSize: 'clamp(0.72rem, 2.3vw, 0.82rem)',
+                  lineHeight: 1.45,
+                  color: 'rgba(255,248,246,0.96)',
+                  textAlign: 'center',
+                  textWrap: 'balance',
+                }}
+              >
+                {c.quotes[0]}
+              </div>
+            </FadeUp>
+          )}
+
           {c.message && (
             <FadeUp delay={0.08}>
               <p style={{
                 fontFamily: "'Nunito', sans-serif", fontWeight: 600,
-                fontSize: 'clamp(1.0rem,3vw,1.5rem)', lineHeight: 1.6,
+                fontSize: mob ? 'clamp(0.85rem, 2.6vw, 1.1rem)' : 'clamp(1.0rem,3vw,1.5rem)', lineHeight: 1.6,
                 textWrap: 'balance', textShadow: '0 2px 28px rgba(0,0,0,.82)',
-                marginTop: '1.2em', color: 'rgba(255,248,246,.97)',
+                marginTop: '0.8em', color: 'rgba(255,248,246,.97)',
               }}>{c.message}</p>
             </FadeUp>
           )}
-          {mob && c.quotes?.[1] && (
+
+          {c.quotes?.[1] && (
             <FadeUp delay={0.11}>
               <p style={{
                 fontFamily: "'Nunito', sans-serif",
                 fontStyle: 'italic',
                 fontWeight: 600,
-                fontSize: 'clamp(0.74rem, 2.3vw, 0.86rem)',
+                fontSize: mob ? 'clamp(0.74rem, 2.3vw, 0.86rem)' : 'clamp(0.88rem, 2vw, 1.05rem)',
                 lineHeight: 1.45,
-                color: 'rgba(255,240,245,0.82)',
-                margin: '0.65rem auto 0',
+                color: 'rgba(255,240,245,0.88)',
+                margin: '0.45rem auto 0',
                 maxWidth: '42ch',
                 textWrap: 'balance',
               }}>
@@ -1741,7 +1857,7 @@ function Toast({ message }) {
 export default function App() {
   const [cur, setCur] = useState(0)
   const [direction, setDirection] = useState(1) // 1 forward, -1 backward
-  const [muted, setMuted] = useState(true)
+  const [muted, setMuted] = useState(false) // Music ON by default as requested
   const [found, setFound] = useState([])
   const [toast, setToast] = useState(null)
   const [opened, setOpened] = useState(false)
@@ -1753,7 +1869,13 @@ export default function App() {
   const lockUntil = useRef(0)
   const curRef = useRef(0)
   const tt = useRef()
-  useAudio(cur, muted)
+  const { fadeOutCurrent, resumeAudio } = useAudio(cur, muted)
+
+  // ── Auto-scroll state: 40s timer per page if user doesn't scroll ──
+  const [lastUserAction, setLastUserAction] = useState(0)
+  const resetAutoTimer = useCallback(() => {
+    setLastUserAction(Date.now())
+  }, [])
 
   // Preload all assets in browser memory (.jpg primary)
   useEffect(() => {
@@ -1778,17 +1900,19 @@ export default function App() {
   }, [])
 
   const handleOpenLightbox = useCallback((imgName, idx, imgsList, title) => {
+    resetAutoTimer()
     setLightbox({
       img: imgName,
       index: idx >= 0 ? idx : 0,
       imgs: imgsList || [imgName],
       title: title || '',
     })
-  }, [])
+  }, [resetAutoTimer])
 
   const handleCloseLightbox = useCallback(() => {
+    resetAutoTimer()
     setLightbox(null)
-  }, [])
+  }, [resetAutoTimer])
 
   const handlePrevLightbox = useCallback(() => {
     setLightbox(prev => {
@@ -1810,13 +1934,40 @@ export default function App() {
     n = Math.max(0, Math.min(N - 1, n))
     const now = performance.now()
     if (n === curRef.current || now < lockUntil.current) return
-    // Lock window swallows momentum and guarantees single deliberate slide advance
-    lockUntil.current = now + 480
+    // Lock window calibrated to match silky smooth 0.65s transition
+    lockUntil.current = now + 680
     setDirection(dir)
     curRef.current = n
     setCur(n)
+    setLastUserAction(Date.now())
   }, [N])
 
+  // ── Auto-scroll: 40s per page if they don't scroll, fade out music, stop at final cake page ──
+  useEffect(() => {
+    // Only auto-scroll when greeting is opened, on slides before final cake page (cur < N - 1),
+    // and when lightbox is not open
+    if (!opened || cur >= N - 1 || lightbox) return
+
+    const AUTO_SECONDS = 40000 // 40 seconds per page
+    const FADE_LEAD = 2000     // Fade out music 2 seconds before slide transition
+
+    // 1. Fade out music 2 seconds before page change
+    const fadeTimer = setTimeout(() => {
+      fadeOutCurrent(2.0)
+    }, AUTO_SECONDS - FADE_LEAD)
+
+    // 2. Advance to next page at 40 seconds
+    const advanceTimer = setTimeout(() => {
+      goTo(curRef.current + 1, 1)
+    }, AUTO_SECONDS)
+
+    return () => {
+      clearTimeout(fadeTimer)
+      clearTimeout(advanceTimer)
+    }
+  }, [cur, opened, lightbox, lastUserAction, N, goTo, fadeOutCurrent])
+
+  // Wheel, Touch, Keyboard gestures
   useEffect(() => {
     let tx = 0, ty = 0
     let accumulatedDelta = 0
@@ -1824,7 +1975,6 @@ export default function App() {
 
     const wheel = e => {
       if (lightboxRef.current) return
-      // Discard inertia events while slide transition is in flight
       if (performance.now() < lockUntil.current) {
         accumulatedDelta = 0
         return
@@ -1835,13 +1985,13 @@ export default function App() {
       clearTimeout(decayTimer)
       decayTimer = setTimeout(() => {
         accumulatedDelta = 0
-      }, 160)
+      }, 180)
 
-      // Solid threshold (45) prevents accidental micro-jitters & trackpad finger drift
       if (Math.abs(accumulatedDelta) > 45) {
         const sign = Math.sign(accumulatedDelta)
         accumulatedDelta = 0
         clearTimeout(decayTimer)
+        resetAutoTimer()
         goTo(curRef.current + sign, sign)
       }
     }
@@ -1859,9 +2009,11 @@ export default function App() {
       const dy = ty - e.changedTouches[0].clientY
       if (Math.abs(dy) > 35 && Math.abs(dy) > Math.abs(dx) * 1.1) {
         const sign = Math.sign(dy)
+        resetAutoTimer()
         goTo(curRef.current + sign, sign)
       } else if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.1) {
         const sign = Math.sign(dx)
+        resetAutoTimer()
         goTo(curRef.current + sign, sign)
       }
     }
@@ -1888,10 +2040,12 @@ export default function App() {
 
       if ([' ', 'ArrowDown', 'ArrowRight', 'PageDown'].includes(e.key)) {
         e.preventDefault()
+        resetAutoTimer()
         goTo(curRef.current + 1, 1)
       }
       if (['ArrowUp', 'ArrowLeft', 'PageUp'].includes(e.key)) {
         e.preventDefault()
+        resetAutoTimer()
         goTo(curRef.current - 1, -1)
       }
     }
@@ -1907,7 +2061,7 @@ export default function App() {
       window.removeEventListener('touchend', te)
       window.removeEventListener('keydown', kd)
     }
-  }, [goTo, handleNextLightbox, handlePrevLightbox])
+  }, [goTo, handleNextLightbox, handlePrevLightbox, resetAutoTimer])
 
   const onFind = (id, msg) => {
     setFound(f => {
@@ -1925,7 +2079,13 @@ export default function App() {
 
       <AnimatePresence mode="wait">
         {!opened ? (
-          <LandingPage key="landing" onOpen={() => setOpened(true)} />
+          <LandingPage
+            key="landing"
+            onOpen={() => {
+              resumeAudio()
+              setOpened(true)
+            }}
+          />
         ) : (
           <Slide
             key={chapters[cur].id}
@@ -1943,11 +2103,11 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      {/* Volume toggle button is always present across landing and all slides */}
+      <MusicBtn muted={muted} onToggle={() => setMuted(m => !m)} />
+
       {opened && (
-        <>
-          <MusicBtn muted={muted} onToggle={() => setMuted(m => !m)} />
-          <DotNav cur={cur} total={N} onGo={n => goTo(n, n > cur ? 1 : -1)} />
-        </>
+        <DotNav cur={cur} total={N} onGo={n => goTo(n, n > cur ? 1 : -1)} />
       )}
 
       <AnimatePresence>
